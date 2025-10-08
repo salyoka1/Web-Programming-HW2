@@ -68,7 +68,32 @@ body {
   padding: 20px;
   border: 1px solid #ddd;
 }
+#flight-section {
+  background: url("850490.jpg") no-repeat center center;
+  background-size: cover;
+  color: #fff;
+  position: relative;
+  border-radius: 8px;
+}
+#flight-section::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  border-radius: 8px;
+  z-index: 0;
+}
 
+#flight-section > * {
+  position: relative;
+  z-index: 1;
+}
+#paxPanel {
+  background: rgba(255,255,255,0.9); /* light background */
+  color: #000;                       /* black text inside */
+  border-radius: 8px;
+  padding: 12px;
+}
 /* Footer */
 .footer {
   background: #e0e7ff;
