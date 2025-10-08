@@ -1,11 +1,12 @@
 <html>
     <head>
         <link rel="stylesheet" href="mystyle.css">
-        <script type="text/JavaScript" src="Java.js" defer></script>
+<script type="text/JavaScript" src="Java.js" defer></script>
     </head>
     <body>
      <div class="header">
-    <h1>Travel Deals</h1>
+    <p class="clock" id="date-time"></p>
+    <h1 class="tittle">Travel Deals</h1>
   </div>
 
  <div class="nav">
@@ -16,13 +17,49 @@
     <a href="Cruises.html">Cruises</a>
     <a href="Contact.html">Contact Us</a>
   </div>
+
+
   <div class="main">
     <div class="side">
-      <p>Side content here</p>
+    <h3>Appearance</h3>
+    
+    <label>Background color:
+      <input type="color" id="bgColorControl">
+    </label>
+    <br><br>
+    
+    <label>Font size:
+      <input type="range" id="fontSizeControl" min="12" max="28" value="16">
+    </label>
     </div>
+
+
     <div class="section">
-      <h2>Main Content</h2>
-      <p>This will change for each page.</p>
+      <h2>Contact Us</h2>
+      <form id="contactForm" onsubmit="return validateContact(event)">
+  First Name: <br>
+  <input id="firstname" type="text" name="firstname"><br>
+
+  Last Name: <br>
+  <input id="lastname" type="text" name="lastname"><br>
+
+  Phone Number: <br>
+  <input id="phone" type="text" name="phone" placeholder="(123) 456-7890"><br>
+
+  Email address: <br>
+  <input id="email" type="text" name="email" placeholder="you@example.com"><br>
+
+  Gender: <br>
+  <label><input type="radio" name="gender" value="F"> Female</label>
+  <label><input type="radio" name="gender" value="M"> Male</label>
+  <br>
+
+  Comment: <br>
+  <textarea id="comment" rows="4" cols="40" placeholder="Minimum 10 characters"></textarea><br><br>
+
+  <button type="submit">Submit</button>
+  <p id="demo"></p>
+</form>
     </div>
   </div>
 
@@ -38,7 +75,6 @@ Name: Sreeranj Sreenivasan  NetID: dal629689</p>
         
     </body>
 </html>
-
 
 
 
