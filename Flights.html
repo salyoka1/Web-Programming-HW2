@@ -1,11 +1,12 @@
 <html>
     <head>
         <link rel="stylesheet" href="mystyle.css">
-        <script type="text/JavaScript" src="Java.js" defer></script>
+<script type="text/JavaScript" src="Java.js" defer></script>
     </head>
     <body>
      <div class="header">
-    <h1>Travel Deals</h1>
+    <p class="clock" id="date-time"></p>
+    <h1 class="tittle">Travel Deals</h1>
   </div>
 
  <div class="nav">
@@ -18,11 +19,77 @@
   </div>
   <div class="main">
     <div class="side">
-      <p>Side content here</p>
+       <h3>Appearance</h3>
+    
+    <label>Background color:
+      <input type="color" id="bgColorControl">
+    </label>
+    <br><br>
+    
+    <label>Font size:
+      <input type="range" id="fontSizeControl" min="12" max="28" value="16">
+    </label>
     </div>
     <div class="section">
-      <h2>Main Content</h2>
-      <p>This will change for each page.</p>
+      <h2>Book a Flight</h2>
+
+    <!-- Trip type -->
+    <div class="trip">
+      <label><input type="radio" name="trip" value="oneway" checked> One-way</label>
+      <label><input type="radio" name="trip" value="round"> Round trip</label>
+    </div>
+
+    <!-- Cities -->
+    <div class="row">
+      <div>
+        <label for="origin">Origin (TX/CA city)</label>
+        <input id="origin" type="text" placeholder="e.g., Dallas">
+      </div>
+      <div>
+        <label for="destination">Destination (TX/CA city)</label>
+        <input id="destination" type="text" placeholder="e.g., Los Angeles">
+      </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="row">
+      <div>
+        <label for="departDate">Departure date <span class="muted">(2024-09-01 … 2024-12-01)</span></label>
+        <input id="departDate" type="date" placeholder="YYYY-MM-DD">
+      </div>
+      <div id="returnWrap" style="display:none;">
+        <label for="returnDate">Return date (Round trip)</label>
+        <input id="returnDate" type="date" placeholder="YYYY-MM-DD">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button id="paxBtn" class="btn icon-btn" type="button">👤 Passengers</button>
+      <button id="searchBtn" class="btn" type="button">Search</button>
+    </div>
+
+    <!-- Passenger panel -->
+    <div id="paxPanel" class="panel">
+      <div class="row">
+        <div>
+          <label for="adultCount">Adults (0–4)</label>
+          <input id="adultCount" type="text" value="1">
+        </div>
+        <div>
+          <label for="childCount">Children (0–4)</label>
+          <input id="childCount" type="text" value="0">
+        </div>
+        <div>
+          <label for="infantCount">Infants (0–4)</label>
+          <input id="infantCount" type="text" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="errorBox" class="error"></div>
+    <div id="result" class="summary" style="display:none;"></div>
     </div>
   </div>
 
@@ -38,7 +105,6 @@ Name: Sreeranj Sreenivasan  NetID: dal629689</p>
         
     </body>
 </html>
-
 
 
 
