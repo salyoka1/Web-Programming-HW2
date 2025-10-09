@@ -1,11 +1,110 @@
 <html>
     <head>
         <link rel="stylesheet" href="mystyle.css">
-        <script type="text/JavaScript" src="Java.js" defer></script>
+<script type="text/JavaScript" src="Java.js" defer></script>
+<script src="jquery-3.7.1.min.js"></script>
+<script>
+$(function(){
+
+  const DESTS = ["alaska","bahamas","europe","mexico"];
+  const MIN_DATE = new Date("2024-09-01");
+  const MAX_DATE = new Date("2024-12-01");
+
+  function toDate(val){
+    // yyyy-mm-dd -> Date (or Invalid Date)
+    return new Date(val);
+  }
+
+  function showError(msg){
+    $("#cruiseError").text(msg).stop(true,true).fadeIn(150);
+    $("#cruiseResult").hide();
+  }
+
+  function showSummary(lines){
+    $("#cruiseError").hide();
+    $("#cruiseResult").html(lines.join("<br>")).stop(true,true).fadeIn(150);
+  }
+
+  function roomsNeeded(ad, ch){
+    // Adults + Children count toward capacity; 2 per room
+    const paying = Math.max(0, ad) + Math.max(0, ch);
+    return Math.max(1, Math.ceil(paying / 2));
+  }
+
+  $("#cruiseSearchBtn").on("click", function(){
+
+    const dest   = ($("#cruiseDestination").val() || "").trim().toLowerCase();
+    const startS = ($("#departStart").val() || "").trim();
+    const endS   = ($("#departEnd").val() || "").trim();
+    const dmin   = Number($("#durMin").val());
+    const dmax   = Number($("#durMax").val());
+    const ad     = Number($("#adults").val());
+    const ch     = Number($("#children").val());
+    const inf    = Number($("#infants").val());
+
+    // Required
+    if(!dest || !startS || !endS){
+      return showError("Please select a destination and both 'departing between' dates.");
+    }
+
+    // Destination check
+    if(!DESTS.includes(dest)){
+      return showError("Destination must be Alaska, Bahamas, Europe, or Mexico.");
+    }
+
+    // Dates in window and start <= end
+    const ds = toDate(startS);
+    const de = toDate(endS);
+    if (isNaN(ds) || isNaN(de)) {
+      return showError("Please provide valid dates.");
+    }
+    if (ds < MIN_DATE || ds > MAX_DATE || de < MIN_DATE || de > MAX_DATE) {
+      return showError("Dates must be between 2024-09-01 and 2024-12-01.");
+    }
+    if (de < ds) {
+      return showError("The end date must be on or after the start date.");
+    }
+
+    // Duration: min >=3, max <=10, and min <= max
+    if (!Number.isFinite(dmin) || !Number.isFinite(dmax)) {
+      return showError("Duration values must be numbers.");
+    }
+    if (dmin < 3)  return showError("Minimum duration cannot be less than 3 days.");
+    if (dmax > 10) return showError("Maximum duration cannot be greater than 10 days.");
+    if (dmax < dmin) return showError("Maximum duration must be >= minimum duration.");
+
+    // Guests: integers >= 0
+    if (![ad,ch,inf].every(n => Number.isInteger(n) && n >= 0)) {
+      return showError("Guest counts must be whole numbers ≥ 0.");
+    }
+    if ((ad + ch + inf) < 1) {
+      return showError("Please specify at least one guest.");
+    }
+
+    // Capacity rule: max 2 guests per room for adults+children (infants do not count)
+    const rooms = roomsNeeded(ad, ch);
+
+    // Build summary
+    const niceDest = dest.charAt(0).toUpperCase() + dest.slice(1);
+    const lines = [
+      `<strong>Destination:</strong> ${niceDest}`,
+      `<strong>Departing between:</strong> ${startS} → ${endS}`,
+      `<strong>Duration:</strong> ${dmin}–${dmax} days`,
+      `<strong>Guests:</strong> Adults ${ad}, Children ${ch}, Infants ${inf}`,
+      `<strong>Estimated rooms needed:</strong> ${rooms}`
+    ];
+
+    showSummary(lines);
+  });
+
+});
+</script>
+
     </head>
     <body>
      <div class="header">
-    <h1>Travel Deals</h1>
+    <p class="clock" id="date-time"></p>
+    <h1 class="tittle">Travel Deals</h1>
   </div>
 
  <div class="nav">
@@ -18,12 +117,79 @@
   </div>
   <div class="main">
     <div class="side">
-      <p>Side content here</p>
+       <h3>Appearance</h3>
+    
+    <label>Background color:
+      <input type="color" id="bgColorControl">
+    </label>
+    <br><br>
+    
+    <label>Font size:
+      <input type="range" id="fontSizeControl" min="12" max="28" value="16">
+    </label>
     </div>
-    <div class="section">
-      <h2>Main Content</h2>
-      <p>This will change for each page.</p>
+    <div class="section" id="cruise-section">
+  <h2>Cruise Search</h2>
+
+  <div class="cruise-card">
+    <div class="row single">
+      <div>
+        <label for="cruiseDestination">Destination</label>
+        <select id="cruiseDestination">
+          <option value="">Select…</option>
+          <option>Alaska</option>
+          <option>Bahamas</option>
+          <option>Europe</option>
+          <option>Mexico</option>
+        </select>
+      </div>
+<div class="row two">
+      <div>
+        <label for="departStart">Departing between (start)</label>
+        <input id="departStart" type="date" placeholder="YYYY-MM-DD">
+      </div>
+
+      <div>
+        <label for="departEnd">Departing between (end)</label>
+        <input id="departEnd" type="date" placeholder="YYYY-MM-DD">
+      </div>
+</div>
     </div>
+
+    <div class="row">
+      <div>
+        <label for="durMin">Duration min (days)</label>
+        <input id="durMin" type="number" min="1" value="3">
+      </div>
+      <div>
+        <label for="durMax">Duration max (days)</label>
+        <input id="durMax" type="number" min="1" value="7">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="adults">Adults</label>
+        <input id="adults" type="number" min="0" value="2">
+      </div>
+      <div>
+        <label for="children">Children</label>
+        <input id="children" type="number" min="0" value="0">
+      </div>
+      <div>
+        <label for="infants">Infants</label>
+        <input id="infants" type="number" min="0" value="0">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="cruiseSearchBtn" class="btn" type="button">Submit</button>
+    </div>
+
+    <div id="cruiseError" class="error" style="display:none;"></div>
+    <div id="cruiseResult" class="summary" style="display:none;"></div>
+  </div>
+</div>
   </div>
 
   <div class="footer">
@@ -38,8 +204,6 @@ Name: Sreeranj Sreenivasan  NetID: dal629689</p>
         
     </body>
 </html>
-
-
 
 
 
