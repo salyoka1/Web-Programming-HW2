@@ -73,6 +73,7 @@ body {
   color: #fff;
   position: relative;
   border-radius: 8px;
+
 }
 #flight-section::before {
   content: "";
@@ -219,4 +220,287 @@ input[type="text"], input[type="date"] {
   color: #000;                       /* black text inside */
   border-radius: 8px;
   padding: 12px;
+}
+
+/* Photo background for the Stays section */
+#stays-section{
+  position: relative;
+  background: url("hotel.jpeg") center/cover no-repeat; /* <-- your image path */
+  border-radius: 10px;
+  
+  color: #fff;               /* default text color over photo */
+  overflow: hidden;          /* keeps overlay rounded */
+
+ padding: 40px 20px;                   
+                                       
+  min-height: 400px;     /* <-- increase this number for taller section */
+  display: flex;         /* flexbox centers content vertically */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* dark overlay so text/controls are legible */
+#stays-section::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.35);   /* tweak darkness */
+  z-index:0;
+  border-radius: inherit;
+}
+
+/* put all *content* above the overlay */
+#stays-section > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* Optional: a light card just for the form area */
+.stays-card{
+  background: transparent;
+  color:#111;
+  padding: 16px;
+  border-radius: 10px;
+}
+
+/* your existing inputs look */
+#stays-section input[type="text"],
+#stays-section input[type="date"],
+#stays-section input[type="number"]{
+  width:100%;
+  padding:10px;
+  border:1px solid #bbb;
+  border-radius:6px;
+  box-sizing:border-box;
+  background:#fff;           /* ensures fields stay white on the photo */
+}
+
+/* Keep all labels/field names white */
+#stays-section label,
+#stays-section h2,
+#stays-section h3,
+#stays-section p {
+  color: #fff;
+}
+#stays-section .summary {
+  color: #111;                /* dark gray text */
+  background: rgba(255,255,255,0.9); 
+  border: 1px solid #ccc;
+margin-top: 12px; 
+  border-radius: 8px;
+}
+
+#stays-section .error {
+  color: #b91c1c;             /* red for errors */
+  background: rgba(255,255,255,0.8);
+  padding: 8px;
+margin-top: 12px; 
+  border-radius: 8px;
+}
+
+
+/* Background image just for this section */
+#cars-section{
+  position: relative;
+  background: url("cars.jpeg") center/cover no-repeat; /* <-- your image */
+  border-radius: 10px;
+  overflow: hidden;
+ 
+
+ padding: 40px 20px;                   
+                                       
+  min-height: 400px;     /* <-- increase this number for taller section */
+  display: flex;         /* flexbox centers content vertically */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Subtle dark overlay for legibility */
+#cars-section::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.35);
+  z-index:0;
+}
+
+/* Make sure actual content sits above overlay */
+#cars-section > *{ position: relative; z-index: 1; }
+
+/* Transparent panel for the main content (optional blur for a glassy feel) */
+#cars-section .content-wrap{
+  background: rgba(0,0,0,0.20);         /* transparent background */
+  backdrop-filter: blur(2px);           /* optional */
+  -webkit-backdrop-filter: blur(2px);   /* Safari support */
+  border-radius: 10px;
+  padding: 14px;
+}
+
+/* White text for content inside the wrap */
+#cars-section h2,
+#cars-section .content-wrap h2,
+#cars-section .content-wrap h3,
+#cars-section .content-wrap label,
+#cars-section .content-wrap p{
+  color: #fff;
+}
+
+/* Inputs stay readable (white fields) */
+#cars-section input[type="text"],
+#cars-section input[type="date"],
+#cars-section select{
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+}
+
+/* Buttons can remain your default theme */
+#cars-section .btn{ /* optional to keep consistency */
+  background: #0b6cff;
+  color:#fff;
+}
+#cars-section .btn:hover{ background:#084dbf; }
+
+/* Keep summary & error styles (dark text on light card) */
+#cars-section .summary{
+  color:#111;
+  background: rgba(246,255,248,0.95);
+  border:1px solid #ccebd6;
+  border-radius:8px;
+  padding:12px;
+  margin-top:10px;
+}
+#cars-section .error{
+  color:#b91c1c;
+  background: rgba(255,255,255,0.9);
+  border-radius:8px;
+  padding:8px;
+  margin-top:10px;
+}
+
+/* Cruise section with photo background */
+#cruise-section {
+  position: relative;
+  background: url("cruise.jpg") center/cover no-repeat; 
+  border-radius: 10px;
+ 
+  color: #fff;            /* default text color over photo */
+  overflow: hidden;       /* keeps overlay rounded */
+
+ padding: 40px 20px;                   
+                                       
+  min-height: 400px;     /* <-- increase this number for taller section */
+  display: flex;         /* flexbox centers content vertically */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+
+
+
+}
+
+/* dark overlay so form text is readable */
+#cruise-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* make sure all inner content is above overlay */
+#cruise-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* keep labels, headings, etc white */
+#cruise-section label,
+#cruise-section h2,
+#cruise-section p {
+  color: #fff;
+}
+
+/* inputs stay white for readability */
+#cruise-section input[type="date"],
+#cruise-section input[type="number"],
+#cruise-section select {
+  background: #fff;
+  color: #000;
+}
+
+/* error + summary keep their normal look */
+#cruise-section .error {
+  color: #b91c1c;
+  background: rgba(255,255,255,0.9);
+  padding: 8px;
+  margin-top: 12px;
+  border-radius: 8px;
+}
+#cruise-section .summary {
+  color: #111;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #ccc;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 8px;
+}
+
+.section h2 { margin-bottom: .5rem; }
+.features { 
+  margin: 0; 
+  padding-left: 1.25rem; 
+  line-height: 1.6; 
+}
+.features li { margin: .25rem 0; }
+
+.row { display:flex; gap:12px; flex-wrap:wrap; }
+
+/* one item taking full width */
+.row.single > div { flex: 1 1 100%; }
+
+/* two items side by side */
+.row.two > div { flex: 1 1 calc(50% - 6px); } 
+
+
+/* Home page (Index section) with background */
+#index-section {
+  background-image: url("travel.avif");  
+  background-size: cover;               
+  background-position: center;          
+  position: relative;                   
+  color: white;                         
+  padding: 40px 20px;                   
+  border-radius: 10px;
+  text-align: center;                   
+  overflow: hidden;                     
+  min-height: 400px;     /* <-- increase this number for taller section */
+  display: flex;         /* flexbox centers content vertically */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Dark overlay */
+#index-section::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* Ensure text sits above overlay */
+#index-section > * {
+  position: relative;
+  z-index: 1;
 }
