@@ -217,3 +217,205 @@ function showError(msg) {
   errorBox.textContent = msg;
 }
 
+/* ==================== STAYS PAGE LOGIC (no RegExp) ==================== */
+
+// Allowed cities (Texas & California) – case-insensitive match without regex
+const TX_CITIES = [
+  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
+  "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
+];
+const CA_CITIES = [
+  "los angeles","san diego","san jose","san francisco","fresno","sacramento","long beach","oakland",
+  "bakersfield","anaheim","riverside","stockton","irvine","santa ana","chula vista","fremont","san bernardino"
+];
+
+// Date window (inclusive): 2024-09-01 .. 2024-12-01
+const STAY_MIN = new Date("2024-09-01");
+const STAY_MAX = new Date("2024-12-01");
+
+// Helpers (no regex)
+function isEmpty(v){ return v === null || v === undefined || String(v).trim() === ""; }
+function parseIntSafe(v){ const n = Number(v); return Number.isFinite(n) ? n : NaN; }
+function isCityTXorCA(name){
+  const n = String(name || "").trim().toLowerCase();
+  return TX_CITIES.includes(n) || CA_CITIES.includes(n);
+}
+function inDateWindow(d){
+  // valid Date and within inclusive range
+  return d instanceof Date && !isNaN(d) && d >= STAY_MIN && d <= STAY_MAX;
+}
+function computeRooms(adults, children){
+  // Rule: “Number of guests cannot be more than 2 for each room.
+  // However infants can stay with adults even if the number of guests exceeds 2.”
+  // => We count only Adults + Children towards room capacity (2 per room).
+  const paying = Math.max(0, adults) + Math.max(0, children);
+  return Math.max(1, Math.ceil(paying / 2)); // at least 1 room if any guests
+}
+
+// Hook up the button if we are on the Stays page
+document.addEventListener("DOMContentLoaded", function(){
+  const btn = document.getElementById("staySearchBtn");
+  if(!btn) return;
+
+  const cityEl     = document.getElementById("stayCity");
+  const inEl       = document.getElementById("checkIn");
+  const outEl      = document.getElementById("checkOut");
+  const adEl       = document.getElementById("stayAdults");
+  const chEl       = document.getElementById("stayChildren");
+  const infEl      = document.getElementById("stayInfants");
+  const errBox     = document.getElementById("stayError");
+  const resultBox  = document.getElementById("stayResult");
+
+  btn.addEventListener("click", function(){
+    // clear messages
+    errBox.textContent = "";
+    resultBox.style.display = "none";
+    resultBox.innerHTML = "";
+
+    // 1) Required fields
+    if (isEmpty(cityEl.value) || isEmpty(inEl.value) || isEmpty(outEl.value)) {
+      errBox.textContent = "Please enter city, check-in, and check-out dates.";
+      return;
+    }
+
+    // 2) City must be in TX or CA (no regex)
+    if (!isCityTXorCA(cityEl.value)) {
+      errBox.textContent = "City must be in Texas or California.";
+      return;
+    }
+
+    // 3) Dates: valid & within 2024-09-01 .. 2024-12-01, and check-out after check-in
+    const inDate  = new Date(inEl.value);
+    const outDate = new Date(outEl.value);
+
+    if (!inDateWindow(inDate) || !inDateWindow(outDate)) {
+      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+      return;
+    }
+    if (!(outDate > inDate)) {
+      errBox.textContent = "Check-out date must be after check-in date.";
+      return;
+    }
+
+    // 4) Guests: integers >= 0
+    const ad = parseIntSafe(adEl.value);
+    const ch = parseIntSafe(chEl.value);
+    const inf = parseIntSafe(infEl.value);
+
+    if (!Number.isInteger(ad) || ad < 0 ||
+        !Number.isInteger(ch) || ch < 0 ||
+        !Number.isInteger(inf) || inf < 0) {
+      errBox.textContent = "Guest counts must be whole numbers ≥ 0.";
+      return;
+    }
+
+    // 5) Capacity rule: “not more than 2 per room” applies to Adults + Children only.
+    // We also ensure there is at least 1 total guest.
+    if ((ad + ch + inf) < 1) {
+      errBox.textContent = "Please specify at least one guest.";
+      return;
+    }
+
+    const rooms = computeRooms(ad, ch);
+
+    // 6) Show summary
+    const lines = [
+      `<strong>City:</strong> ${cityEl.value.trim()}`,
+      `<strong>Check-in:</strong> ${inEl.value}`,
+      `<strong>Check-out:</strong> ${outEl.value}`,
+      `<strong>Guests:</strong> Adults ${ad}, Children ${ch}, Infants ${inf}`,
+      `<strong>Rooms needed:</strong> ${rooms}`
+    ];
+    resultBox.innerHTML = lines.join("<br>");
+    resultBox.style.display = "block";
+  });
+});
+
+/* ==================== CARS PAGE LOGIC (DOM methods) ==================== */
+
+// Allowed cities (lowercase, no regex needed)
+const TX_CITIES_CAR = [
+  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
+  "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
+];
+const CA_CITIES_CAR = [
+  "los angeles","san diego","san jose","san francisco","fresno","sacramento","long beach","oakland",
+  "bakersfield","anaheim","riverside","stockton","irvine","santa ana","chula vista","fremont","san bernardino"
+];
+
+// Valid car types (lowercase)
+const VALID_CAR_TYPES = ["economy","suv","compact","midsize"];
+
+// Date window (inclusive)
+const CAR_MIN = new Date("2024-09-01");
+const CAR_MAX = new Date("2024-12-01");
+
+// Helpers
+function lc(v){ return String(v || "").trim().toLowerCase(); }
+function isCityTXorCA_CAR(name){
+  const n = lc(name);
+  return TX_CITIES_CAR.includes(n) || CA_CITIES_CAR.includes(n);
+}
+function inDateWindow_CAR(d){
+  return d instanceof Date && !isNaN(d) && d >= CAR_MIN && d <= CAR_MAX;
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const cityEl   = document.getElementById("carCity");
+  const typeEl   = document.getElementById("carType");
+  const inEl     = document.getElementById("carCheckIn");
+  const outEl    = document.getElementById("carCheckOut");
+  const btn      = document.getElementById("carSubmit");
+  const errBox   = document.getElementById("carError");
+  const result   = document.getElementById("carResult");
+
+  if (!btn) return;
+
+  btn.addEventListener("click", function(){
+    // reset messages
+    errBox.textContent = "";
+    result.style.display = "none";
+    result.innerHTML = "";
+
+    // 1) Required fields
+    if (!cityEl.value.trim() || !typeEl.value || !inEl.value || !outEl.value) {
+      errBox.textContent = "Please enter city, car type, pick-up date, and drop-off date.";
+      return;
+    }
+
+    // 2) City must be TX/CA
+    if (!isCityTXorCA_CAR(cityEl.value)) {
+      errBox.textContent = "City must be a city in Texas or California.";
+      return;
+    }
+
+    // 3) Car type must be in the allowed list
+    const chosenType = lc(typeEl.value);
+    if (!VALID_CAR_TYPES.includes(chosenType)) {
+      errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
+      return;
+    }
+
+    // 4) Dates valid & within window; drop-off after pick-up
+    const inDate  = new Date(inEl.value);
+    const outDate = new Date(outEl.value);
+    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
+      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+      return;
+    }
+    if (!(outDate > inDate)) {
+      errBox.textContent = "Drop-off date must be after pick-up date.";
+      return;
+    }
+
+    // If all good → show summary
+    const lines = [
+      `<strong>City:</strong> ${cityEl.value.trim()}`,
+      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
+      `<strong>Pick-up:</strong> ${inEl.value}`,
+      `<strong>Drop-off:</strong> ${outEl.value}`
+    ];
+    result.innerHTML = lines.join("<br>");
+    result.style.display = "block";
+  });
+});
