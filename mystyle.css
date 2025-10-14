@@ -1,3 +1,4 @@
+/* Body */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -6,10 +7,9 @@ body {
 
 /* Header */
 .header {
-   background: #0a2540;
+  background: #0a2540;
   color: white;
   padding: 20px;
-  /* changed from text-align:center; to flex layout */
   display: flex;
   align-items: center;
   gap: 12px;
@@ -18,15 +18,14 @@ body {
   margin: 0;
   font-size: 24px;
   font-weight: bold;
-  flex: 1;              /* lets the title take the middle space */
-  text-align: center;   /* keep the title centered */
+  flex: 1;
+  text-align: center;
 }
-
 .header .clock {
   font-size: 14px;
   font-weight: 600;
   opacity: 0.9;
-  white-space: nowrap;  /* prevents wrapping */
+  white-space: nowrap;
 }
 
 /* Navigation bar */
@@ -67,33 +66,7 @@ body {
   padding: 20px;
   border: 1px solid #ddd;
 }
-#flight-section {
-  background: url("850490.jpg") no-repeat center center;
-  background-size: cover;
-  color: #fff;
-  position: relative;
-  border-radius: 8px;
 
-}
-#flight-section::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
-  border-radius: 8px;
-  z-index: 0;
-}
-
-#flight-section > * {
-  position: relative;
-  z-index: 1;
-}
-#paxPanel {
-  background: rgba(255,255,255,0.9); /* light background */
-  color: #000;                       /* black text inside */
-  border-radius: 8px;
-  padding: 12px;
-}
 /* Footer */
 .footer {
   background: #e0e7ff;
@@ -103,7 +76,31 @@ body {
   border-top: 2px solid #0b6cff;
 }
 
-/* Form container */
+/* Flight Page */
+#flight-section {
+  background: url("850490.jpg") no-repeat center center;
+  background-size: cover;
+  color: #fff;
+  position: relative;
+  border-radius: 8px;
+}
+#flight-section::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  border-radius: 8px;
+  z-index: 0;
+}
+#flight-section > * { position: relative; z-index: 1; }
+#paxPanel {
+  background: rgba(255,255,255,0.9);
+  color: #000;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* Contact Page */
 form#contactForm {
   max-width: 500px;
   margin: 20px auto;
@@ -112,17 +109,12 @@ form#contactForm {
   border-radius: 8px;
   border: 1px solid #ccc;
   box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-  font-family: Arial, sans-serif;
 }
-
-/* Labels */
 form#contactForm label {
   font-weight: bold;
   display: block;
   margin: 10px 0 5px;
 }
-
-/* Inputs and textarea */
 form#contactForm input[type="text"],
 form#contactForm input[type="number"],
 form#contactForm textarea {
@@ -134,18 +126,11 @@ form#contactForm textarea {
   font-size: 14px;
   box-sizing: border-box;
 }
-
 form#contactForm textarea {
   resize: vertical;
   min-height: 80px;
 }
-
-/* Radio buttons */
-form#contactForm input[type="radio"] {
-  margin-right: 5px;
-}
-
-/* Submit button */
+form#contactForm input[type="radio"] { margin-right: 5px; }
 form#contactForm button {
   background-color: #0a2540;
   color: white;
@@ -156,44 +141,8 @@ form#contactForm button {
   cursor: pointer;
   transition: background 0.3s;
 }
-
-form#contactForm button:hover {
-  background-color: #084dbf;
-}
-
-/* Error / Success message */
-#demo {
-  margin-top: 10px;
-  font-weight: bold;
-  color: #b91c1c;  /* red for errors */
-}
-
-.row { display: flex; gap: 12px; flex-wrap: wrap; }
-.row > div { flex: 1 1 220px; }
-
-label { display: block; font-weight: 600; margin: 10px 0 6px; }
-input[type="text"], input[type="date"] {
-  width: 100%; padding: 10px; border: 1px solid #bbb; border-radius: 6px; box-sizing: border-box;
-}
-
-.trip { display: flex; gap: 16px; margin: 6px 0 12px; }
-
-.actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; }
-.btn { background: #0b6cff; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
-.btn:hover { background: #084dbf; }
-.icon-btn { display: inline-flex; align-items: center; gap: 8px; background: #eaf0ff; color: #0b3c91; border: 1px solid #bdd0ff; }
-
-.panel { display: none; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-top: 10px; background: #fafafa; }
-.panel input { width: 80px; text-align: center; }
-
-.error { color: #b91c1c; font-weight: 700; margin-top: 10px; }
-.summary { margin-top: 10px; background: #f6fff8; border: 1px solid #ccebd6; padding: 12px; border-radius: 8px; }
-.muted { color: #6b7280; font-size: 12px; }
-
-/* --- Appearance controls look --- */
-.side h3 { margin: 6px 0 10px; }
-.side label { font-weight: 600; }
-
+form#contactForm button:hover { background-color: #084dbf; }
+#demo { margin-top: 10px; font-weight: bold; color: #b91c1c; }
 
 #contactbackground {
   background: url("5dabd10c-ee6c-4d8b-993d-be4b02f358cd.png") no-repeat center center;
@@ -201,7 +150,16 @@ input[type="text"], input[type="date"] {
   color: #fff;
   position: relative;
   border-radius: 8px;
+  padding: 40px 20px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
+
+/* Add a dark overlay for contrast */
 #contactbackground::before {
   content: "";
   position: absolute;
@@ -211,202 +169,137 @@ input[type="text"], input[type="date"] {
   z-index: 0;
 }
 
+/* Ensure all content stays above overlay */
 #contactbackground > * {
   position: relative;
   z-index: 1;
 }
+
+/* Contact form styling over the image */
 #contactForm {
-  background: rgba(255,255,255,0.9); /* light background */
-  color: #000;                       /* black text inside */
+  background: rgba(255,255,255,0.9);  
+  color: #000;                        
   border-radius: 8px;
-  padding: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* Photo background for the Stays section */
-#stays-section{
-  position: relative;
-  background: url("hotel.jpeg") center/cover no-repeat; /* <-- your image path */
-  border-radius: 10px;
-  
-  color: #fff;               /* default text color over photo */
-  overflow: hidden;          /* keeps overlay rounded */
+/* Global shared utilities */
+.row { display:flex; gap:12px; flex-wrap:wrap; }
+label { display:block; font-weight:600; margin:10px 0 6px; }
+input[type="text"], input[type="date"] {
+  width:100%; padding:10px; border:1px solid #bbb; border-radius:6px; box-sizing:border-box;
+}
+.actions {
+  display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-top:12px;
+}
+.btn { background:#0b6cff; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; }
+.btn:hover { background:#084dbf; }
+.error { color:#b91c1c; font-weight:700; margin-top:10px; }
+.summary { color: #111;  margin-top:10px; background:#f6fff8; border:1px solid #ccebd6; padding:12px; border-radius:8px; }
 
- padding: 40px 20px;                   
-                                       
-  min-height: 400px;     /* <-- increase this number for taller section */
-  display: flex;         /* flexbox centers content vertically */
+/* Stays Page */
+#stays-section {
+  position: relative;
+  background: url("hotel.jpeg") center/cover no-repeat;
+  border-radius: 10px;
+  color: #fff;
+  overflow: hidden;
+  padding: 40px 20px;
+  min-height: 400px;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
-
-/* dark overlay so text/controls are legible */
-#stays-section::before{
+#stays-section::before {
   content:"";
   position:absolute;
   inset:0;
-  background: rgba(0,0,0,.35);   /* tweak darkness */
+  background: rgba(0,0,0,.35);
   z-index:0;
   border-radius: inherit;
 }
-
-/* put all *content* above the overlay */
-#stays-section > *{
-  position: relative;
-  z-index: 1;
-}
-
-/* Optional: a light card just for the form area */
-.stays-card{
-  background: transparent;
-  color:#111;
-  padding: 16px;
-  border-radius: 10px;
-}
-
-/* your existing inputs look */
+#stays-section > * { position: relative; z-index: 1; }
 #stays-section input[type="text"],
 #stays-section input[type="date"],
-#stays-section input[type="number"]{
-  width:100%;
-  padding:10px;
-  border:1px solid #bbb;
-  border-radius:6px;
-  box-sizing:border-box;
-  background:#fff;           /* ensures fields stay white on the photo */
+#stays-section input[type="number"] {
+  width:100%; padding:10px; border:1px solid #bbb; border-radius:6px; box-sizing:border-box; background:#fff;
 }
-
-/* Keep all labels/field names white */
 #stays-section label,
 #stays-section h2,
 #stays-section h3,
-#stays-section p {
-  color: #fff;
-}
+#stays-section p { color: #fff; }
 #stays-section .summary {
-  color: #111;                /* dark gray text */
-  background: rgba(255,255,255,0.9); 
-  border: 1px solid #ccc;
-margin-top: 12px; 
-  border-radius: 8px;
+  color: #111; background: rgba(255,255,255,0.9);
+  border: 1px solid #ccc; margin-top:12px; border-radius:8px;
 }
-
 #stays-section .error {
-  color: #b91c1c;             /* red for errors */
-  background: rgba(255,255,255,0.8);
-  padding: 8px;
-margin-top: 12px; 
-  border-radius: 8px;
+  color:#b91c1c; background:rgba(255,255,255,0.8);
+  padding:8px; margin-top:12px; border-radius:8px;
 }
 
-
-/* Background image just for this section */
-#cars-section{
+/* Cars Page */
+#cars-section {
   position: relative;
-  background: url("cars.jpeg") center/cover no-repeat; /* <-- your image */
+  background: url("cars.jpeg") center/cover no-repeat;
   border-radius: 10px;
   overflow: hidden;
- 
-
- padding: 40px 20px;                   
-                                       
-  min-height: 400px;     /* <-- increase this number for taller section */
-  display: flex;         /* flexbox centers content vertically */
+  padding: 40px 20px;
+  min-height: 400px;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
-
-/* Subtle dark overlay for legibility */
-#cars-section::before{
+#cars-section::before {
   content:"";
   position:absolute;
   inset:0;
   background: rgba(0,0,0,.35);
   z-index:0;
 }
-
-/* Make sure actual content sits above overlay */
-#cars-section > *{ position: relative; z-index: 1; }
-
-/* Transparent panel for the main content (optional blur for a glassy feel) */
-#cars-section .content-wrap{
-  background: rgba(0,0,0,0.20);         /* transparent background */
-  backdrop-filter: blur(2px);           /* optional */
-  -webkit-backdrop-filter: blur(2px);   /* Safari support */
-  border-radius: 10px;
-  padding: 14px;
-}
-
-/* White text for content inside the wrap */
+#cars-section > * { position: relative; z-index: 1; }
 #cars-section h2,
-#cars-section .content-wrap h2,
-#cars-section .content-wrap h3,
-#cars-section .content-wrap label,
-#cars-section .content-wrap p{
-  color: #fff;
-}
-
-/* Inputs stay readable (white fields) */
+#cars-section label { color: #fff; }
 #cars-section input[type="text"],
 #cars-section input[type="date"],
-#cars-section select{
+#cars-section select {
   width: 100%;
   padding: 10px;
   border: 1px solid #bbb;
   border-radius: 6px;
-  box-sizing: border-box;
   background: #fff;
   color: #111;
 }
-
-/* Buttons can remain your default theme */
-#cars-section .btn{ /* optional to keep consistency */
-  background: #0b6cff;
-  color:#fff;
+#cars-section .btn { background:#0b6cff; color:#fff; }
+#cars-section .btn:hover { background:#084dbf; }
+#cars-section .summary {
+  color:#111; background:rgba(246,255,248,0.95);
+  border:1px solid #ccebd6; border-radius:8px;
+  padding:12px; margin-top:10px;
 }
-#cars-section .btn:hover{ background:#084dbf; }
-
-/* Keep summary & error styles (dark text on light card) */
-#cars-section .summary{
-  color:#111;
-  background: rgba(246,255,248,0.95);
-  border:1px solid #ccebd6;
-  border-radius:8px;
-  padding:12px;
-  margin-top:10px;
-}
-#cars-section .error{
-  color:#b91c1c;
-  background: rgba(255,255,255,0.9);
-  border-radius:8px;
-  padding:8px;
-  margin-top:10px;
+#cars-section .error {
+  color:#b91c1c; background:rgba(255,255,255,0.9);
+  border-radius:8px; padding:8px; margin-top:10px;
 }
 
-/* Cruise section with photo background */
+/* Cruise Page */
 #cruise-section {
   position: relative;
-  background: url("cruise.jpg") center/cover no-repeat; 
+  background: url("cruise.jpg") center/cover no-repeat;
   border-radius: 10px;
- 
-  color: #fff;            /* default text color over photo */
-  overflow: hidden;       /* keeps overlay rounded */
-
- padding: 40px 20px;                   
-                                       
-  min-height: 400px;     /* <-- increase this number for taller section */
-  display: flex;         /* flexbox centers content vertically */
+  color: #fff;
+  overflow: hidden;
+  padding: 40px 20px;
+  min-height: 400px;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-
-
-
-
 }
-
-/* dark overlay so form text is readable */
 #cruise-section::before {
   content: "";
   position: absolute;
@@ -415,81 +308,44 @@ margin-top: 12px;
   border-radius: inherit;
   z-index: 0;
 }
-
-/* make sure all inner content is above overlay */
-#cruise-section > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* keep labels, headings, etc white */
+#cruise-section > * { position: relative; z-index: 1; }
 #cruise-section label,
 #cruise-section h2,
-#cruise-section p {
-  color: #fff;
-}
-
-/* inputs stay white for readability */
+#cruise-section p { color: #fff; }
 #cruise-section input[type="date"],
 #cruise-section input[type="number"],
-#cruise-section select {
-  background: #fff;
-  color: #000;
-}
-
-/* error + summary keep their normal look */
+#cruise-section select { background: #fff; color: #000; }
 #cruise-section .error {
-  color: #b91c1c;
-  background: rgba(255,255,255,0.9);
-  padding: 8px;
-  margin-top: 12px;
-  border-radius: 8px;
+  color:#b91c1c; background:rgba(255,255,255,0.9);
+  padding:8px; margin-top:12px; border-radius:8px;
 }
 #cruise-section .summary {
-  color: #111;
-  background: rgba(255,255,255,0.9);
-  border: 1px solid #ccc;
-  padding: 12px;
-  margin-top: 12px;
-  border-radius: 8px;
+  color:#111; background:rgba(255,255,255,0.9);
+  border:1px solid #ccc; padding:12px; margin-top:12px; border-radius:8px;
 }
 
-.section h2 { margin-bottom: .5rem; }
-.features { 
-  margin: 0; 
-  padding-left: 1.25rem; 
-  line-height: 1.6; 
-}
-.features li { margin: .25rem 0; }
+/* Cruise: layout adjustment for first row */
+.cruise-card > .row:first-child > div:first-child { flex: 1 1 100%; }
+.cruise-card > .row:first-child > div:nth-child(2),
+.cruise-card > .row:first-child > div:nth-child(3) { flex: 1 1 calc(50% - 6px); }
 
-.row { display:flex; gap:12px; flex-wrap:wrap; }
-
-/* one item taking full width */
-.row.single > div { flex: 1 1 100%; }
-
-/* two items side by side */
-.row.two > div { flex: 1 1 calc(50% - 6px); } 
-
-
-/* Home page (Index section) with background */
+/* Home page (Index section) */
 #index-section {
-  background-image: url("travel.avif");  
-  background-size: cover;               
-  background-position: center;          
-  position: relative;                   
-  color: white;                         
-  padding: 40px 20px;                   
+  background-image: url("travel.avif");
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: white;
+  padding: 40px 20px;
   border-radius: 10px;
-  text-align: center;                   
-  overflow: hidden;                     
-  min-height: 400px;     /* <-- increase this number for taller section */
-  display: flex;         /* flexbox centers content vertically */
+  text-align: center;
+  overflow: hidden;
+  min-height: 400px;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
-
-/* Dark overlay */
 #index-section::before {
   content: "";
   position: absolute;
@@ -498,9 +354,4 @@ margin-top: 12px;
   border-radius: inherit;
   z-index: 0;
 }
-
-/* Ensure text sits above overlay */
-#index-section > * {
-  position: relative;
-  z-index: 1;
-}
+#index-section > * { position: relative; z-index: 1; }
