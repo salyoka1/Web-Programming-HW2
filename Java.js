@@ -371,51 +371,55 @@ document.addEventListener("DOMContentLoaded", function(){
 
   if (!btn) return;
 
-  btn.addEventListener("click", function(){
-    // reset messages
-    errBox.textContent = "";
-    result.style.display = "none";
-    result.innerHTML = "";
+ btn.addEventListener("click", function () {
+  // reset
+  errBox.textContent = "";
+  result.style.display = "none";
+  result.innerHTML = "";
 
-    // 1) Required fields
-    if (!cityEl.value.trim() || !typeEl.value || !inEl.value || !outEl.value) {
-      errBox.textContent = "Please enter city, car type, pick-up date, and drop-off date.";
-      return;
-    }
+  const city  = cityEl.value.trim();
+  const type  = typeEl.value;           // select value
+  const inVal = inEl.value;
+  const outVal= outEl.value;
 
-    // 2) City must be TX/CA
-    if (!isCityTXorCA_CAR(cityEl.value)) {
-      errBox.textContent = "City must be a city in Texas or California.";
-      return;
-    }
+  // 1) Field-by-field required checks
+  if (!city)  return (errBox.textContent = "Please enter a city.");
+  if (!type)  return (errBox.textContent = "Please select a car type.");
+  if (!inVal) return (errBox.textContent = "Please choose a pick-up date.");
+  if (!outVal)return (errBox.textContent = "Please choose a drop-off date.");
 
-    // 3) Car type must be in the allowed list
-    const chosenType = lc(typeEl.value);
-    if (!VALID_CAR_TYPES.includes(chosenType)) {
-      errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
-      return;
-    }
+  // 2) City must be TX/CA
+  if (!isCityTXorCA_CAR(city)) {
+    errBox.textContent = "City must be a city in Texas or California.";
+    return;
+  }
 
-    // 4) Dates valid & within window; drop-off after pick-up
-    const inDate  = new Date(inEl.value);
-    const outDate = new Date(outEl.value);
-    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
-      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
-      return;
-    }
-    if (!(outDate > inDate)) {
-      errBox.textContent = "Drop-off date must be after pick-up date.";
-      return;
-    }
+  // 3) Car type must be in allowed list (protects against tampering)
+  const chosenType = lc(type);
+  if (!VALID_CAR_TYPES.includes(chosenType)) {
+    errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
+    return;
+  }
 
-    // If all good → show summary
-    const lines = [
-      `<strong>City:</strong> ${cityEl.value.trim()}`,
-      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
-      `<strong>Pick-up:</strong> ${inEl.value}`,
-      `<strong>Drop-off:</strong> ${outEl.value}`
-    ];
-    result.innerHTML = lines.join("<br>");
-    result.style.display = "block";
-  });
+  // 4) Dates window + order
+  const inDate  = new Date(inVal);
+  const outDate = new Date(outVal);
+  if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
+    errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+    return;
+  }
+  if (!(outDate > inDate)) {
+    errBox.textContent = "Drop-off date must be after pick-up date.";
+    return;
+  }
+
+  // 5) Success
+  result.innerHTML = [
+    `<strong>City:</strong> ${city}`,
+    `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
+    `<strong>Pick-up:</strong> ${inVal}`,
+    `<strong>Drop-off:</strong> ${outVal}`
+  ].join("<br>");
+  result.style.display = "block";
+});
 });
