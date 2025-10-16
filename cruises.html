@@ -1,6 +1,7 @@
 <html>
     <head>
-        <link rel="stylesheet" href="mystyle.css">
+        <link rel="stylesheet" type= "text/css" href="mystyle.css">
+<title> Travel Deals: Cruises Deals </title>
 <script type="text/JavaScript" src="Java.js" defer></script>
 <script src="jquery-3.7.1.min.js"></script>
 <script>
@@ -43,9 +44,28 @@ $(function(){
     const inf    = Number($("#infants").val());
 
     // Required
-    if(!dest || !startS || !endS){
-      return showError("Please select a destination and both 'departing between' dates.");
-    }
+   $("#cruiseDestination, #departStart, #departEnd").removeClass("is-invalid");
+
+// destination required
+if (!dest) {
+  $("#cruiseDestination").addClass("is-invalid").focus();
+  return showError("Please select a destination.");
+}
+
+// start+end required, with separate messages
+if (!startS && !endS) {
+  $("#departStart, #departEnd").addClass("is-invalid");
+  $("#departStart").focus();
+  return showError("Please enter both 'Departing between' dates (start and end).");
+}
+if (!startS) {
+  $("#departStart").addClass("is-invalid").focus();
+  return showError("Please enter the start date for 'Departing between'.");
+}
+if (!endS) {
+  $("#departEnd").addClass("is-invalid").focus();
+  return showError("Please enter the end date for 'Departing between'.");
+}
 
     // Destination check
     if(!DESTS.includes(dest)){
@@ -159,18 +179,18 @@ $(function(){
     <div class="row">
       <div>
         <label for="durMin">Duration min (days)</label>
-        <input id="durMin" type="number" min="1" value="3">
+        <input id="durMin" type="number" min="1" value="0">
       </div>
       <div>
         <label for="durMax">Duration max (days)</label>
-        <input id="durMax" type="number" min="1" value="10">
+        <input id="durMax" type="number" min="1" value="0">
       </div>
     </div>
 
     <div class="row">
       <div>
         <label for="adults">Adults</label>
-        <input id="adults" type="number" min="0" value="1">
+        <input id="adults" type="number" min="0" value="0">
       </div>
       <div>
         <label for="children">Children</label>
@@ -204,7 +224,6 @@ Name: Sreeranj Sreenivasan  NetID: dal629689</p>
         
     </body>
 </html>
-
 
 
 
