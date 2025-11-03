@@ -21,7 +21,7 @@ function validateContact(e) {
 
   // Regex rules
   const nameRx   = /^[A-Z][a-zA-Z]*$/;            // alphabetic only, first letter capital
-  const phoneRx  = /^\(\d{3}\)\s\d{3}-\d{4}$/;     // (ddd) ddd-dddd  (note the space)
+  const phoneRx  = /^\(\d{3}\)\s\d{3}-\d{4}$/;     // (ddd) ddd-dddd  
   const emailRx  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;   // must contain @ and .
 
   // Clear previous message
@@ -74,7 +74,7 @@ function validateContact(e) {
     return false;
   }
 
-  // If all valid → show 
+  // If all valid 
  demoEl.style.color = "#0b6cff";
 demoEl.innerHTML = "Form submitted successfully!";
 
@@ -121,7 +121,7 @@ if (paxBtn && paxPanel) {
 const txCaCityRx = new RegExp(
   '^\\s*(?:' + [
     // Texas
-    'Austin','Dallas','Houston','San Antonio','El Paso','Fort Worth','Arlington','Plano','Irving',
+    'Austin','Dallas','Houston','San Antonio','El Paso','Fort Worth','Arlington','Plano','Irving','Denton',
     'Corpus Christi','Lubbock','Garland','McKinney','Frisco','Amarillo','Grand Prairie','Brownsville',
     // California
     'Los Angeles','San Diego','San Jose','San Francisco','Fresno','Sacramento','Long Beach','Oakland',
@@ -221,7 +221,7 @@ function showError(msg) {
 
 // Allowed cities (Texas & California) – case-insensitive match without regex
 const TX_CITIES = [
-  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
+  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving","Denton",
   "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
 ];
 const CA_CITIES = [
@@ -394,7 +394,7 @@ document.addEventListener("DOMContentLoaded", function(){
     return;
   }
 
-  // 3) Car type must be in allowed list (protects against tampering)
+  // 3) Car type must be in allowed list 
   const chosenType = lc(type);
   if (!VALID_CAR_TYPES.includes(chosenType)) {
     errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
