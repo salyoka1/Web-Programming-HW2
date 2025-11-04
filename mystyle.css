@@ -356,3 +356,36 @@ input[type="text"], input[type="date"] {
   z-index: 0;
 }
 #index-section > * { position: relative; z-index: 1; }
+
+.flightCard {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  background: #fff;
+}
+.flightCard.alt { background: #f8fbff; }
+fieldset label { display:block; margin:6px 0; }
+
+.trip input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: radio;
+  accent-color: #0b6cff;   /* ensures the filled dot is clearly visible */
+  background: #fff;        /* keeps the ring visible against dark bg */
+}
+
+/* Optional: spacing + focus visibility */
+.trip {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.trip input[type="radio"]:focus {
+  outline: 2px solid #84b1ff;
+  outline-offset: 2px;
+}
+.flightCard div { margin: 2px 0; }
+.flightCard div > strong {
+  display: inline-block;
+  min-width: 200px;   /* align the labels in a neat column */
+}
