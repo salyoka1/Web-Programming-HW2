@@ -19,6 +19,7 @@
     <a href="cars.html">Cars</a>
     <a href="cruises.html">Cruises</a>
     <a href="contact.html">Contact Us</a>
+    <a href="cart.html">Cart</a>
   </div>
   <div class="main">
     <div class="side">
@@ -96,7 +97,25 @@
     <div id="errorBox" class="error"></div>
     <div id="result" class="summary" style="display:none;"></div>
     </div>
+  <!-- NEW: search results go here -->
+<div id="flightResults" class="summary" style="display:none;">
+  <h3>Available flights</h3>
+  <div id="outboundWrap">
+    <h4>Departing flights</h4>
+    <div id="outboundList"></div>
   </div>
+
+  <div id="inboundWrap" style="display:none; margin-top:16px;">
+    <h4>Returning flights</h4>
+    <div id="inboundList"></div>
+  </div>
+
+  <!-- For round trips, show an “Add both to cart” after two selections -->
+  <div id="addBothContainer" style="display:none; margin-top:12px;">
+    <button id="addRoundToCart" class="btn">Add departing + returning to cart</button>
+  </div>
+</div>
+</div>
 
   <div class="footer">
     <p>Name: Sally Badr - NetID: sxb230121</br>
