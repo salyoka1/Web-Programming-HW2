@@ -271,12 +271,11 @@ function ensureManualFlightsDb(force = false) {
     { flightId:"TXCA-023", origin:"El Paso",      destination:"San Jose",     departDate:"2024-10-10", arrivalDate:"2024-10-10", departTime:"06:55", arrivalTime:"10:00", availableSeats:52, price:192 },
     { flightId:"TXCA-024", origin:"Fort Worth",   destination:"Sacramento",   departDate:"2024-10-12", arrivalDate:"2024-10-12", departTime:"11:05", arrivalTime:"14:20", availableSeats:88, price:214 },
     { flightId:"TXCA-025", origin:"Dallas",       destination:"San Jose",     departDate:"2024-11-02", arrivalDate:"2024-11-02", departTime:"12:10", arrivalTime:"15:20", availableSeats:79, price:222 },
-{ flightId:"TXCA-027", origin:"Dallas",  destination:"Los Angeles",       departDate:"2024-11-05", arrivalDate:"2024-11-05", departTime:"17:00", arrivalTime:"20:10", availableSeats:91, price:225 },
+    { flightId:"TXCA-027", origin:"Dallas",       destination:"Los Angeles",  departDate:"2024-11-05", arrivalDate:"2024-11-05", departTime:"17:00", arrivalTime:"20:10", availableSeats:91, price:225 },
 
     // ----- CA → TX -----
     { flightId:"CATX-026", origin:"Los Angeles",  destination:"Dallas",       departDate:"2024-09-01", arrivalDate:"2024-09-01", departTime:"17:00", arrivalTime:"20:10", availableSeats:91, price:225 },
     { flightId:"CATX-026", origin:"Los Angeles",  destination:"Dallas",       departDate:"2024-11-06", arrivalDate:"2024-11-06", departTime:"17:00", arrivalTime:"20:10", availableSeats:91, price:225 },
-
     { flightId:"CATX-027", origin:"San Diego",    destination:"Houston",      departDate:"2024-09-02", arrivalDate:"2024-09-02", departTime:"18:40", arrivalTime:"21:55", availableSeats:69, price:215 },
     { flightId:"CATX-028", origin:"San Jose",     destination:"Austin",       departDate:"2024-09-03", arrivalDate:"2024-09-03", departTime:"06:30", arrivalTime:"09:40", availableSeats:61, price:200 },
     { flightId:"CATX-029", origin:"San Francisco",destination:"San Antonio",   departDate:"2024-09-04", arrivalDate:"2024-09-04", departTime:"07:15", arrivalTime:"10:25", availableSeats:74, price:240 },
@@ -324,8 +323,15 @@ function ensureManualFlightsDb(force = false) {
 function dateToYMD(d){ const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
 function ymdToDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
 
-function searchFlights(origin, destination, ymd, paxNeeded) {
+/**
+ * Search flights for an exact date; if none, return ±3-day alternatives.
+ * Options:
+ *   - opts.minYmd: lower bound (YYYY-MM-DD). Alt dates earlier than this are skipped.
+ */
+function searchFlights(origin, destination, ymd, paxNeeded, opts = {}) {
   const db = getFlightsDb();
+  const minYmd = opts.minYmd || null;
+
   let matches = db.filter(f =>
     f.origin.toLowerCase() === origin.toLowerCase() &&
     f.destination.toLowerCase() === destination.toLowerCase() &&
@@ -337,11 +343,17 @@ function searchFlights(origin, destination, ymd, paxNeeded) {
 
   // ±3 days if none on exact
   const center = ymdToDate(ymd);
+  if (isNaN(center)) return { exact: [], alt: [] };
+
   const alt = [];
   for (let offset=-3; offset<=3; offset++) {
     if (offset===0) continue;
     const dt = new Date(center); dt.setDate(center.getDate()+offset);
     const y = dateToYMD(dt);
+
+    // Enforce lower bound if provided
+    if (minYmd && y < minYmd) continue;
+
     const dayMatches = db.filter(f =>
       f.origin.toLowerCase() === origin.toLowerCase() &&
       f.destination.toLowerCase() === destination.toLowerCase() &&
@@ -415,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.selectedOutbound = null;
   window.selectedInbound  = null;
 
-  // Search button (basic validation summary is handled elsewhere in your code)
+  // Search button
   const searchBtn = document.getElementById('searchBtn');
   searchBtn?.addEventListener('click', () => {
     const trip = document.querySelector('input[name="trip"]:checked')?.value || 'oneway';
@@ -442,7 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // INBOUND (round trip)
     if (trip === 'round') {
       inWrap.style.display = '';
-      const back = searchFlights(dest, origin, ret, paxTotal);
+      // IMPORTANT: do not show alt inbound dates earlier than departure date
+      const back = searchFlights(dest, origin, ret, paxTotal, { minYmd: depart });
       inList.innerHTML = '';
       renderFlights(inList, back.exact);
       renderAltFlights(inList, back.alt);
@@ -458,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add both to cart (round trip)
   addBothBtn?.addEventListener('click', () => {
     if (!(window.selectedOutbound && window.selectedInbound)) return;
-    // Use your app’s addRoundToCart if present; otherwise, fall back to a minimal cart
     if (typeof window.addRoundToCart === 'function') {
       window.addRoundToCart(window.selectedOutbound, window.selectedInbound, window.currentContext);
     } else {
@@ -626,7 +638,7 @@ document.addEventListener("DOMContentLoaded", function(){
       return;
     }
 
-    // 4) Guests: integers >= 0
+    // 4) Guests: integers ≥ 0
     const ad = parseIntSafe(adEl.value);
     const ch = parseIntSafe(chEl.value);
     const inf = parseIntSafe(infEl.value);
@@ -638,8 +650,7 @@ document.addEventListener("DOMContentLoaded", function(){
       return;
     }
 
-    // 5) Capacity rule: “not more than 2 per room” applies to Adults + Children only.
-    // We also ensure there is at least 1 total guest.
+    // 5) Capacity rule
     if ((ad + ch + inf) < 1) {
       errBox.textContent = "Please specify at least one guest.";
       return;
@@ -700,57 +711,57 @@ document.addEventListener("DOMContentLoaded", function(){
 
   if (!btn) return;
 
- btn.addEventListener("click", function () {
-  // reset
-  errBox.textContent = "";
-  result.style.display = "none";
-  result.innerHTML = "";
+  btn.addEventListener("click", function () {
+    // reset
+    errBox.textContent = "";
+    result.style.display = "none";
+    result.innerHTML = "";
 
-  const city  = cityEl.value.trim();
-  const type  = typeEl.value;           // select value
-  const inVal = inEl.value;
-  const outVal= outEl.value;
+    const city  = cityEl.value.trim();
+    const type  = typeEl.value;           // select value
+    const inVal = inEl.value;
+    const outVal= outEl.value;
 
-  // 1) Field-by-field required checks
-  if (!city)  return (errBox.textContent = "Please enter a city.");
-  if (!type)  return (errBox.textContent = "Please select a car type.");
-  if (!inVal) return (errBox.textContent = "Please choose a pick-up date.");
-  if (!outVal)return (errBox.textContent = "Please choose a drop-off date.");
+    // 1) Field-by-field required checks
+    if (!city)  return (errBox.textContent = "Please enter a city.");
+    if (!type)  return (errBox.textContent = "Please select a car type.");
+    if (!inVal) return (errBox.textContent = "Please choose a pick-up date.");
+    if (!outVal)return (errBox.textContent = "Please choose a drop-off date.");
 
-  // 2) City must be TX/CA
-  if (!isCityTXorCA_CAR(city)) {
-    errBox.textContent = "City must be a city in Texas or California.";
-    return;
-  }
+    // 2) City must be TX/CA
+    if (!isCityTXorCA_CAR(city)) {
+      errBox.textContent = "City must be a city in Texas or California.";
+      return;
+    }
 
-  // 3) Car type must be in allowed list 
-  const chosenType = lc(type);
-  if (!VALID_CAR_TYPES.includes(chosenType)) {
-    errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
-    return;
-  }
+    // 3) Car type must be in allowed list 
+    const chosenType = lc(type);
+    if (!VALID_CAR_TYPES.includes(chosenType)) {
+      errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
+      return;
+    }
 
-  // 4) Dates window + order
-  const inDate  = new Date(inVal);
-  const outDate = new Date(outVal);
-  if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
-    errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
-    return;
-  }
-  if (!(outDate > inDate)) {
-    errBox.textContent = "Drop-off date must be after pick-up date.";
-    return;
-  }
+    // 4) Dates window + order
+    const inDate  = new Date(inVal);
+    const outDate = new Date(outVal);
+    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
+      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+      return;
+    }
+    if (!(outDate > inDate)) {
+      errBox.textContent = "Drop-off date must be after pick-up date.";
+      return;
+    }
 
-  // 5) Success
-  result.innerHTML = [
-    `<strong>City:</strong> ${city}`,
-    `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
-    `<strong>Pick-up:</strong> ${inVal}`,
-    `<strong>Drop-off:</strong> ${outVal}`
-  ].join("<br>");
-  result.style.display = "block";
-});
+    // 5) Success
+    result.innerHTML = [
+      `<strong>City:</strong> ${city}`,
+      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
+      `<strong>Pick-up:</strong> ${inVal}`,
+      `<strong>Drop-off:</strong> ${outVal}`
+    ].join("<br>");
+    result.style.display = "block";
+  });
 });
 
 /******************** CART PAGE BOOTSTRAP *************************/
@@ -767,21 +778,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const money = n => '$' + n.toFixed(2);
   let workingItem = null;
 
-function labeledFlightHTML(f, title=null) {
-  return `
-    <div class="flightCard">
-      ${title ? `<div style="margin-bottom:6px;"><strong>${title}</strong></div>` : ""}
-      <div><strong>Flight ID:</strong> ${f.flightId}</div>
-      <div><strong>Origin:</strong> ${f.origin}</div>
-      <div><strong>Destination:</strong> ${f.destination}</div>
-      <div><strong>Departure date:</strong> ${f.departDate}</div>
-      <div><strong>Arrival date:</strong> ${f.arrivalDate}</div>
-      <div><strong>Departure time:</strong> ${f.departTime}</div>
-      <div><strong>Arrival time:</strong> ${f.arrivalTime}</div>
-    
-    </div>
-  `;
-}
+  function labeledFlightHTML(f, title=null) {
+    return `
+      <div class="flightCard">
+        ${title ? `<div style="margin-bottom:6px;"><strong>${title}</strong></div>` : ""}
+        <div><strong>Flight ID:</strong> ${f.flightId}</div>
+        <div><strong>Origin:</strong> ${f.origin}</div>
+        <div><strong>Destination:</strong> ${f.destination}</div>
+        <div><strong>Departure date:</strong> ${f.departDate}</div>
+        <div><strong>Arrival date:</strong> ${f.arrivalDate}</div>
+        <div><strong>Departure time:</strong> ${f.departTime}</div>
+        <div><strong>Arrival time:</strong> ${f.arrivalTime}</div>
+      </div>
+    `;
+  }
+
   function renderCart() {
     const cart = getCart();
     if (!cart.length) {
@@ -794,9 +805,9 @@ function labeledFlightHTML(f, title=null) {
     const counts = workingItem.counts || { adults: 0, children: 0, infants: 0 };
     const legs = (workingItem.type === 'round') ? [workingItem.outbound, workingItem.inbound] : [workingItem.outbound];
 
-   const legHtml = legs.map((f, i) =>
-  labeledFlightHTML(f, workingItem.type === 'round' ? (i === 0 ? 'Departing flight' : 'Returning flight') : null)
-).join('');
+    const legHtml = legs.map((f, i) =>
+      labeledFlightHTML(f, workingItem.type === 'round' ? (i === 0 ? 'Departing flight' : 'Returning flight') : null)
+    ).join('');
 
     const adultPrice = legs.reduce((s,f)=>s+f.price, 0);
     const childPrice = adultPrice * 0.70;
@@ -896,11 +907,11 @@ function labeledFlightHTML(f, title=null) {
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
 
-    // Decrement seats for all booked legs
+    // Decrement seats for all booked legs (match by flightId + departDate)
     const db = getFlightsDb();
     const take = (counts.adults|0)+(counts.children|0)+(counts.infants|0);
     legs.forEach(f=>{
-      const idx = db.findIndex(x=>x.flightId===f.flightId);
+      const idx = db.findIndex(x=>x.flightId===f.flightId && x.departDate===f.departDate);
       if (idx>=0) db[idx].availableSeats = Math.max(0, db[idx].availableSeats - take);
     });
     saveFlightsDb(db);
