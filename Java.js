@@ -10,73 +10,37 @@ setInterval(updateDateTime, 1000);
 function validateContact(e) {
   if (e && e.preventDefault) e.preventDefault();
 
-  const firstName = (document.getElementById("firstname") || {}).value?.trim() || "";
-  const lastName  = (document.getElementById("lastname")  || {}).value?.trim() || "";
-  const phone     = (document.getElementById("phone")      || {}).value?.trim() || "";
-  const email     = (document.getElementById("email")      || {}).value?.trim() || "";
-  const comment   = (document.getElementById("comment")    || {}).value?.trim() || "";
-  const demoEl    = document.getElementById("demo");
+  const firstName = (document.getElementById("firstname")?.value || "").trim();
+  const lastName  = (document.getElementById("lastname")?.value  || "").trim();
+  const phone     = (document.getElementById("phone")?.value     || "").trim();
+  const email     = (document.getElementById("email")?.value     || "").trim();
+  const comment   = (document.getElementById("comment")?.value   || "").trim();
+  const demoEl    = document.getElementById("demo") || { style:{}, textContent:"" };
 
-  // Regex rules (per assignment)
-  const nameRx   = /^[A-Z][a-zA-Z]*$/;           // alphabetic only, first letter capital
-  const phoneRx  = /^\(\d{3}\)\d{3}-\d{4}$/;     // (ddd)ddd-dddd (no space)
-  const emailRx  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // contains @ and .
+  const nameRx   = /^[A-Z][a-zA-Z]*$/;
+  const phoneRx  = /^\(\d{3}\)\d{3}-\d{4}$/;
+  const emailRx  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Reset message
-  if (demoEl) {
-    demoEl.style.color = "#b91c1c";
-    demoEl.textContent = "";
-  }
+  demoEl.style.color = "#b91c1c";
+  demoEl.textContent = "";
 
-  // 1) Required
   if (!firstName || !lastName || !phone || !email || !comment) {
-    if (demoEl) demoEl.textContent = "Please fill in all required fields.";
+    demoEl.textContent = "Please fill in all required fields.";
     return false;
   }
-  // 2) Names format
-  if (!nameRx.test(firstName)) {
-    if (demoEl) demoEl.textContent = "First name must start with a capital letter and contain letters only.";
-    return false;
-  }
-  if (!nameRx.test(lastName)) {
-    if (demoEl) demoEl.textContent = "Last name must start with a capital letter and contain letters only.";
-    return false;
-  }
-  // 3) Not the same
-  if (firstName.toLowerCase() === lastName.toLowerCase()) {
-    if (demoEl) demoEl.textContent = "First name and last name cannot be the same.";
-    return false;
-  }
-  // 4) Phone format
-  if (!phoneRx.test(phone)) {
-    if (demoEl) demoEl.textContent = "Phone must be in the format (123)456-7890.";
-    return false;
-  }
-  // 5) Email format
-  if (!emailRx.test(email)) {
-    if (demoEl) demoEl.textContent = "Please enter a valid email address.";
-    return false;
-  }
-  // 6) Gender radio
+  if (!nameRx.test(firstName)) { demoEl.textContent = "First name must start with a capital letter and contain letters only."; return false; }
+  if (!nameRx.test(lastName))  { demoEl.textContent = "Last name must start with a capital letter and contain letters only.";  return false; }
+  if (firstName.toLowerCase() === lastName.toLowerCase()) { demoEl.textContent = "First name and last name cannot be the same."; return false; }
+  if (!phoneRx.test(phone)) { demoEl.textContent = "Phone must be in the format (123)456-7890."; return false; }
+  if (!emailRx.test(email)) { demoEl.textContent = "Please enter a valid email address."; return false; }
+
   const genderEl = document.querySelector('input[name="gender"]:checked');
-  if (!genderEl) {
-    if (demoEl) demoEl.textContent = "Please select a gender.";
-    return false;
-  }
+  if (!genderEl) { demoEl.textContent = "Please select a gender."; return false; }
   const gender = genderEl.value;
 
-  // 7) Comment length
-  if (comment.length < 10) {
-    if (demoEl) demoEl.textContent = "Comment must be at least 10 characters.";
-    return false;
-  }
+  if (comment.length < 10) { demoEl.textContent = "Comment must be at least 10 characters."; return false; }
 
-  // ===== Store as JSON (localStorage + downloadable file) =====
-  const record = {
-    firstName, lastName, phone, email, gender, comment,
-    timestamp: new Date().toISOString()
-  };
-
+  const record = { firstName, lastName, phone, email, gender, comment, timestamp: new Date().toISOString() };
   const KEY = "contact_submissions";
   const arr = JSON.parse(localStorage.getItem(KEY) || "[]");
   arr.push(record);
@@ -92,11 +56,9 @@ function validateContact(e) {
   a.remove();
   URL.revokeObjectURL(url);
 
-  if (demoEl) {
-    demoEl.style.color = "#0b6cff";
-    demoEl.textContent = "Form submitted successfully!";
-  }
-  return false; // keep the page
+  demoEl.style.color = "#0b6cff";
+  demoEl.textContent = "Form submitted successfully!";
+  return false;
 }
 
 /******************** APPEARANCE CONTROLS *************************/
@@ -104,55 +66,140 @@ document.getElementById("bgColorControl")?.addEventListener("input", function() 
   document.body.style.backgroundColor = this.value;
 });
 document.getElementById("fontSizeControl")?.addEventListener("input", function() {
-  const s = document.querySelector(".section");
-  if (s) s.style.fontSize = this.value + "px";
+  const sec = document.querySelector(".section");
+  if (sec) sec.style.fontSize = this.value + "px";
 });
 
 /******************** FLIGHTS – UI BASICS *************************/
-// Trip type toggles the return date field
-(() => {
-  const tripRadios = document.querySelectorAll('input[name="trip"]');
-  const returnWrap = document.getElementById('returnWrap');
-  tripRadios.forEach(r => {
-    r.addEventListener('change', () => {
-      if (!returnWrap) return;
-      if (r.value === 'round' && r.checked) {
-        returnWrap.style.display = '';
-      } else if (r.value === 'oneway' && r.checked) {
-        returnWrap.style.display = 'none';
-        const returnEl = document.getElementById('returnDate');
-        if (returnEl) returnEl.value = '';
-      }
-    });
-  });
-
-  // Passenger panel toggle
+// Passenger panel toggle (RESTORED)
+function initPaxToggle() {
   const paxBtn   = document.getElementById('paxBtn');
   const paxPanel = document.getElementById('paxPanel');
-  if (paxBtn && paxPanel) {
-    paxBtn.addEventListener('click', () => {
-      paxPanel.style.display = (paxPanel.style.display === 'none' || paxPanel.style.display === '') ? 'block' : 'none';
-    });
-  }
-})();
+  if (!paxBtn || !paxPanel) return; // not on flights page or HTML doesn't include it
+
+  // Ensure a predictable initial state: collapsed by default
+  paxPanel.style.display = 'none';
+  paxBtn.setAttribute('aria-expanded', 'false');
+
+  paxBtn.addEventListener('click', () => {
+    const openNow = paxPanel.style.display !== 'none';
+    paxPanel.style.display = openNow ? 'none' : 'block';
+    paxBtn.setAttribute('aria-expanded', openNow ? 'false' : 'true');
+  });
+}
+
+// Round trip return-date toggle
+function initReturnToggle() {
+  const tripRadios = document.querySelectorAll('input[name="trip"]');
+  const returnWrap = document.getElementById('returnWrap');
+  const returnEl   = document.getElementById('returnDate');
+  if (!tripRadios.length || !returnWrap) return;
+
+  const apply = () => {
+    const checked = document.querySelector('input[name="trip"]:checked');
+    const val = checked ? checked.value : 'oneway';
+    if (val === 'round') {
+      returnWrap.style.display = '';
+    } else {
+      returnWrap.style.display = 'none';
+      if (returnEl) returnEl.value = '';
+    }
+  };
+
+  apply(); // initial
+  tripRadios.forEach(r => r.addEventListener('change', apply));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initPaxToggle();
+  initReturnToggle();
+});
 
 /******************** FLIGHTS – VALIDATION (regex-first) *************************/
-// Cities via regex list
 const txCaCityRx = new RegExp(
   '^\\s*(?:' + [
-    // Texas
     'Austin','Dallas','Houston','San Antonio','El Paso','Fort Worth','Arlington','Plano','Irving','Denton',
     'Corpus Christi','Lubbock','Garland','McKinney','Frisco','Amarillo','Grand Prairie','Brownsville',
-    // California
     'Los Angeles','San Diego','San Jose','San Francisco','Fresno','Sacramento','Long Beach','Oakland',
     'Bakersfield','Anaheim','Riverside','Stockton','Irvine','Santa Ana','Chula Vista','Fremont','San Bernardino'
   ].join('|') + ')\\s*$', 'i'
 );
-
 const dateRx  = /^\d{4}-\d{2}-\d{2}$/;
 const minDate = new Date('2024-09-01');
 const maxDate = new Date('2024-12-01');
 const paxRx   = /^[0-4]$/;
+
+const originEl  = document.getElementById('origin');
+const destEl    = document.getElementById('destination');
+const departEl  = document.getElementById('departDate');
+const returnEl  = document.getElementById('returnDate');
+
+const adultEl   = document.getElementById('adultCount');
+const childEl   = document.getElementById('childCount');
+const infantEl  = document.getElementById('infantCount');
+
+const errorBox  = document.getElementById('errorBox');
+const resultBox = document.getElementById('result');
+
+function showError(msg) { if (errorBox) errorBox.textContent = msg; }
+
+function validateFlightForm() {
+  if (!originEl || !destEl || !departEl) return { ok: false };
+
+  const trip   = document.querySelector('input[name="trip"]:checked')?.value || 'oneway';
+  const origin = (originEl.value || '').trim();
+  const dest   = (destEl.value   || '').trim();
+  const depart = (departEl.value || '').trim();
+  const ret    = (returnEl?.value || '').trim();
+
+  const a = (adultEl?.value  || '').trim();
+  const c = (childEl?.value  || '').trim();
+  const i = (infantEl?.value || '').trim();
+
+  if (errorBox) errorBox.textContent = '';
+  if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
+
+  if (!txCaCityRx.test(origin)) { showError('Origin must be a city in Texas or California.'); return { ok: false }; }
+  if (!txCaCityRx.test(dest))   { showError('Destination must be a city in Texas or California.'); return { ok: false }; }
+  if (origin.toLowerCase() === dest.toLowerCase()) { showError('Origin and destination must be different.'); return { ok: false }; }
+
+  if (!dateRx.test(depart)) { showError('Departure date must be in YYYY-MM-DD format.'); return { ok: false }; }
+  const dDate = new Date(depart);
+  if (isNaN(dDate) || dDate < minDate || dDate > maxDate) {
+    showError('Departure date must be between 2024-09-01 and 2024-12-01.');
+    return { ok: false };
+  }
+
+  if (trip === 'round') {
+    if (!dateRx.test(ret)) { showError('Return date must be in YYYY-MM-DD format.'); return { ok: false }; }
+    const rDate = new Date(ret);
+    if (isNaN(rDate) || rDate < minDate || rDate > maxDate) {
+      showError('Return date must be between 2024-09-01 and 2024-12-01.');
+      return { ok: false };
+    }
+    if (rDate <= dDate) { showError('Return date must be after the departure date.'); return { ok: false }; }
+  }
+
+  if (!paxRx.test(a)) { showError('Adults must be a number from 0 to 4.'); return { ok: false }; }
+  if (!paxRx.test(c)) { showError('Children must be a number from 0 to 4.'); return { ok: false }; }
+  if (!paxRx.test(i)) { showError('Infants must be a number from 0 to 4.'); return { ok: false }; }
+  const total = Number(a) + Number(c) + Number(i);
+  if (total < 1) { showError('At least one passenger is required.'); return { ok: false }; }
+
+  if (resultBox) {
+    const lines = [
+      `<strong>Trip type:</strong> ${trip === 'round' ? 'Round trip' : 'One-way'}`,
+      `<strong>Origin:</strong> ${origin}`,
+      `<strong>Destination:</strong> ${dest}`,
+      `<strong>Departure:</strong> ${depart}`,
+    ];
+    if (trip === 'round') lines.push(`<strong>Return:</strong> ${ret}`);
+    lines.push(`<strong>Passengers:</strong> Adults ${a}, Children ${c}, Infants ${i}`);
+    resultBox.innerHTML = lines.join('<br>');
+    resultBox.style.display = 'block';
+  }
+  return { ok: true };
+}
 
 /******************** FLIGHTS DB (file-backed) *************************/
 const FLIGHTS_DB_KEY = 'flights_db_manual_v1';
@@ -165,11 +212,6 @@ function saveFlightsDb(db) {
   localStorage.setItem(FLIGHTS_DB_KEY, JSON.stringify(db));
 }
 
-/**
- * Load flights from flights.json once (expects a plain array).
- * If it finds { flights: [...] }, it will use that array instead.
- * Call ensureFlightsDbFromFile(true) to force-reload during development.
- */
 async function ensureFlightsDbFromFile(force = false) {
   const meta = JSON.parse(localStorage.getItem(FLIGHTS_DB_META_KEY) || 'null');
 
@@ -180,38 +222,21 @@ async function ensureFlightsDbFromFile(force = false) {
     meta?.source === 'file' &&
     meta?.version === 1
   ) {
-    return; // already loaded from file
+    return;
   }
 
-  // fetch() requires serving over HTTP. Live Server or GitHub Pages are fine.
   const res = await fetch('flights.json', { cache: 'no-store' });
   if (!res.ok) {
     console.error('Failed to load flights.json:', res.status, res.statusText);
     return;
   }
-
-  const raw = await res.json();
-  const flights = Array.isArray(raw) ? raw : (Array.isArray(raw?.flights) ? raw.flights : null);
-
+  const flights = await res.json();
   if (!Array.isArray(flights)) {
-    console.error('flights.json is not a plain array or {flights:[...]}.');
+    console.error('flights.json is not an array');
     return;
   }
 
-  // Normalize field names to our app’s schema if needed
-  const normalized = flights.map(f => ({
-    flightId: f.flightId,
-    origin: f.origin,
-    destination: f.destination,
-    departDate: f.departDate || f.departureDate,    // support both
-    arrivalDate: f.arrivalDate,
-    departTime: f.departTime || f.departureTime,    // support both
-    arrivalTime: f.arrivalTime,
-    availableSeats: Number(f.availableSeats ?? 0),
-    price: Number(f.price ?? 0)
-  }));
-
-  saveFlightsDb(normalized);
+  saveFlightsDb(flights);
   localStorage.setItem(
     FLIGHTS_DB_META_KEY,
     JSON.stringify({ source: 'file', version: 1, loadedAt: new Date().toISOString() })
@@ -222,25 +247,19 @@ async function ensureFlightsDbFromFile(force = false) {
 function dateToYMD(d){ const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
 function ymdToDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
 
-/**
- * Search flights for an exact date; if none, return ±3-day alternatives.
- * Options:
- *   - opts.minYmd: lower bound (YYYY-MM-DD). Alt dates earlier than this are skipped.
- */
 function searchFlights(origin, destination, ymd, paxNeeded, opts = {}) {
   const db = getFlightsDb();
   const minYmd = opts.minYmd || null;
 
   let matches = db.filter(f =>
-    String(f.origin).toLowerCase() === String(origin).toLowerCase() &&
-    String(f.destination).toLowerCase() === String(destination).toLowerCase() &&
+    f.origin.toLowerCase() === origin.toLowerCase() &&
+    f.destination.toLowerCase() === destination.toLowerCase() &&
     f.departDate === ymd &&
     f.availableSeats >= paxNeeded
   );
 
   if (matches.length) return { exact: matches, alt: [] };
 
-  // ±3 days if none on exact
   const center = ymdToDate(ymd);
   if (isNaN(center)) return { exact: [], alt: [] };
 
@@ -249,13 +268,11 @@ function searchFlights(origin, destination, ymd, paxNeeded, opts = {}) {
     if (offset===0) continue;
     const dt = new Date(center); dt.setDate(center.getDate()+offset);
     const y = dateToYMD(dt);
-
-    // Enforce lower bound if provided
     if (minYmd && y < minYmd) continue;
 
     const dayMatches = db.filter(f =>
-      String(f.origin).toLowerCase() === String(origin).toLowerCase() &&
-      String(f.destination).toLowerCase() === String(destination).toLowerCase() &&
+      f.origin.toLowerCase() === origin.toLowerCase() &&
+      f.destination.toLowerCase() === destination.toLowerCase() &&
       f.departDate === y &&
       f.availableSeats >= paxNeeded
     );
@@ -266,7 +283,6 @@ function searchFlights(origin, destination, ymd, paxNeeded, opts = {}) {
 
 /******************** RENDER HELPERS *************************/
 function flightCardHTML(f) {
-  // unique per row because some flightIds repeat (different dates)
   const rowId = `${f.flightId}|${f.departDate}`;
   return `
     <div class="flightCard">
@@ -302,11 +318,10 @@ function renderAltFlights(listEl, alt) {
 /******************** WIRING: FLIGHTS PAGE *************************/
 document.addEventListener('DOMContentLoaded', () => {
   (async () => {
-    // Load external JSON into localStorage
     await ensureFlightsDbFromFile();
 
     const resultsWrap   = document.getElementById('flightResults');
-    if (!resultsWrap) return; // not on flights page
+    if (!resultsWrap) return;
 
     const originEl = document.getElementById('origin');
     const destEl   = document.getElementById('destination');
@@ -315,126 +330,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const adultEl  = document.getElementById('adultCount');
     const childEl  = document.getElementById('childCount');
     const infantEl = document.getElementById('infantCount');
-    const errorBox = document.getElementById('errorBox');
-    const resultBox= document.getElementById('result');
 
     const outList       = document.getElementById('outboundList');
     const inWrap        = document.getElementById('inboundWrap');
     const inList        = document.getElementById('inboundList');
     const addBothWrap   = document.getElementById('addBothContainer');
     const addBothBtn    = document.getElementById('addRoundToCart');
-    const searchBtn     = document.getElementById('searchBtn');
 
-    // Expose context + selections globally so the click handler can see them
     window.currentContext   = { paxTotal: 0, trip: 'oneway', origin: '', dest: '', depart: '', ret: '' };
     window.selectedOutbound = null;
     window.selectedInbound  = null;
 
-    // ---- VALIDATE-FIRST search handler ----
+    const searchBtn = document.getElementById('searchBtn');
     searchBtn?.addEventListener('click', () => {
-      // reset UI
-      if (errorBox) errorBox.textContent = '';
-      if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
-      if (resultsWrap) resultsWrap.style.display = 'none'; // hide until valid
-      if (outList) outList.innerHTML = '';
-      if (inList) inList.innerHTML = '';
-      if (addBothWrap) addBothWrap.style.display = 'none';
+      const { ok } = validateFlightForm();
+      if (!ok) {
+        if (outList) outList.innerHTML = '';
+        if (inList)  inList.innerHTML  = '';
+        if (resultsWrap) resultsWrap.style.display = 'none';
+        return;
+      }
 
-      // read form
-      const trip   = document.querySelector('input[name="trip"]:checked')?.value || 'oneway';
+      const trip = document.querySelector('input[name="trip"]:checked')?.value || 'oneway';
       const origin = (originEl?.value || '').trim();
-      const dest   = (destEl?.value || '').trim();
+      const dest   = (destEl?.value   || '').trim();
       const depart = (departEl?.value || '').trim();
       const ret    = (returnEl?.value || '').trim();
 
-      const a = (adultEl?.value || '').trim();
-      const c = (childEl?.value || '').trim();
-      const i = (infantEl?.value || '').trim();
+      const a = Number((adultEl?.value  || '0').trim());
+      const c = Number((childEl?.value  || '0').trim());
+      const i = Number((infantEl?.value || '0').trim());
+      const paxTotal = a + c + i;
 
-      // ---- VALIDATION (block results if any fail) ----
-      // cities
-      if (!txCaCityRx.test(origin)) { if (errorBox) errorBox.textContent = 'Origin must be a city in Texas or California.'; return; }
-      if (!txCaCityRx.test(dest))   { if (errorBox) errorBox.textContent = 'Destination must be a city in Texas or California.'; return; }
-      if (origin.toLowerCase() === dest.toLowerCase()) { if (errorBox) errorBox.textContent = 'Origin and destination must be different.'; return; }
-
-      // dates
-      if (!dateRx.test(depart)) { if (errorBox) errorBox.textContent = 'Departure date must be in YYYY-MM-DD format.'; return; }
-      const dDate = new Date(depart);
-      if (isNaN(dDate) || dDate < minDate || dDate > maxDate) {
-        if (errorBox) errorBox.textContent = 'Departure date must be between 2024-09-01 and 2024-12-01.'; return;
-      }
-
-      let rDate = null;
-      if (trip === 'round') {
-        if (!dateRx.test(ret)) { if (errorBox) errorBox.textContent = 'Return date must be in YYYY-MM-DD format.'; return; }
-        rDate = new Date(ret);
-        if (isNaN(rDate) || rDate < minDate || rDate > maxDate) {
-          if (errorBox) errorBox.textContent = 'Return date must be between 2024-09-01 and 2024-12-01.'; return;
-        }
-        if (!(rDate > dDate)) { // strictly after
-          if (errorBox) errorBox.textContent = 'Return date must be after the departure date.'; return;
-        }
-      }
-
-      // pax
-      if (!paxRx.test(a)) { if (errorBox) errorBox.textContent = 'Adults must be a number from 0 to 4.'; return; }
-      if (!paxRx.test(c)) { if (errorBox) errorBox.textContent = 'Children must be a number from 0 to 4.'; return; }
-      if (!paxRx.test(i)) { if (errorBox) errorBox.textContent = 'Infants must be a number from 0 to 4.'; return; }
-      const paxTotal = Number(a) + Number(c) + Number(i);
-      if (paxTotal < 1) { if (errorBox) errorBox.textContent = 'At least one passenger is required.'; return; }
-
-      // If we reached here, inputs are valid → show a small summary (optional)
-      if (resultBox) {
-        const lines = [
-          `<strong>Trip type:</strong> ${trip === 'round' ? 'Round trip' : 'One-way'}`,
-          `<strong>Origin:</strong> ${origin}`,
-          `<strong>Destination:</strong> ${dest}`,
-          `<strong>Departure:</strong> ${depart}`,
-        ];
-        if (trip === 'round') lines.push(`<strong>Return:</strong> ${ret}`);
-        lines.push(`<strong>Passengers:</strong> Adults ${a}, Children ${c}, Infants ${i}`);
-        resultBox.innerHTML = lines.join('<br>');
-        resultBox.style.display = 'block';
-      }
-
-      // ---- SEARCH (now that validation passed) ----
       window.currentContext = { paxTotal, trip, origin, dest, depart, ret };
       window.selectedOutbound = null;
       window.selectedInbound  = null;
 
-      // OUTBOUND must be origin → destination on the depart date
-      const out = searchFlights(origin, dest, depart, paxTotal);
-      if (outList) {
-        outList.innerHTML = '';
-        renderFlights(outList, out.exact);
-        renderAltFlights(outList, out.alt);
-      }
+      const out = searchFlights(origin, dest, depart, paxTotal, { direction: 'outbound' });
+      outList.innerHTML = '';
+      renderFlights(outList, out.exact);
+      renderAltFlights(outList, out.alt);
 
-      // INBOUND shown only for round trip; must be destination → origin on the return date
       if (trip === 'round') {
-        if (inWrap) inWrap.style.display = '';
-        const back = searchFlights(dest, origin, ret, paxTotal, { minYmd: depart }); // min bound prevents showing dates before depart
-        if (inList) {
-          inList.innerHTML = '';
-          renderFlights(inList, back.exact);
-          renderAltFlights(inList, back.alt);
-        }
-        if (addBothWrap) addBothWrap.style.display = 'none';
+        inWrap.style.display = '';
+        const back = searchFlights(dest, origin, ret, paxTotal, { minYmd: depart, direction: 'inbound' });
+        inList.innerHTML = '';
+        renderFlights(inList, back.exact);
+        renderAltFlights(inList, back.alt);
+        addBothWrap.style.display = 'none';
       } else {
-        if (inWrap) inWrap.style.display = 'none';
-        if (addBothWrap) addBothWrap.style.display = 'none';
+        inWrap.style.display = 'none';
+        addBothWrap.style.display = 'none';
       }
 
-      if (resultsWrap) resultsWrap.style.display = 'block';
+      resultsWrap.style.display = 'block';
     });
 
-    // Add both to cart (round trip)
     addBothBtn?.addEventListener('click', () => {
       if (!(window.selectedOutbound && window.selectedInbound)) return;
       if (typeof window.addRoundToCart === 'function') {
         window.addRoundToCart(window.selectedOutbound, window.selectedInbound, window.currentContext);
       } else {
-        // Minimal fallback
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const getVal = id => Number((document.getElementById(id)?.value || '0').trim());
         cart.push({
@@ -446,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('cart', JSON.stringify(cart));
       }
       alert('Departing + Returning flights added to cart!');
-      if (addBothWrap) addBothWrap.style.display = 'none';
+      addBothWrap.style.display = 'none';
     });
   })();
 });
@@ -460,7 +416,6 @@ document.addEventListener('click', (e) => {
   const f  = db.find(x => x.flightId === fid && x.departDate === fdate);
   if (!f) return;
 
-  // Round-trip: select outbound / inbound separately
   if (window.currentContext?.trip === 'round') {
     const isOutboundBtn = document.getElementById('outboundList')
                          ?.contains(e.target.closest('.flightCard'));
@@ -476,11 +431,9 @@ document.addEventListener('click', (e) => {
       addBothWrap.style.display = '';
     }
   } else {
-    // One-way: add directly to cart via your helper if present
     if (typeof window.addOneWayToCart === 'function') {
       window.addOneWayToCart(f, window.currentContext);
     } else {
-      // Minimal fallback
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       const getVal = id => Number((document.getElementById(id)?.value || '0').trim());
       cart.push({
@@ -519,216 +472,9 @@ function addRoundToCart(outbound, inbound, ctx) {
   setCart(cart);
 }
 
-/* ==================== STAYS PAGE LOGIC (no RegExp) ==================== */
-
-// Allowed cities (Texas & California) – case-insensitive match without regex
-const TX_CITIES = [
-  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving","denton",
-  "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
-];
-const CA_CITIES = [
-  "los angeles","san diego","san jose","san francisco","fresno","sacramento","long beach","oakland",
-  "bakersfield","anaheim","riverside","stockton","irvine","santa ana","chula vista","fremont","san bernardino"
-];
-
-// Date window (inclusive): 2024-09-01 .. 2024-12-01
-const STAY_MIN = new Date("2024-09-01");
-const STAY_MAX = new Date("2024-12-01");
-
-// Helpers (no regex)
-function isEmpty(v){ return v === null || v === undefined || String(v).trim() === ""; }
-function parseIntSafe(v){ const n = Number(v); return Number.isFinite(n) ? n : NaN; }
-function isCityTXorCA(name){
-  const n = String(name || "").trim().toLowerCase();
-  return TX_CITIES.includes(n) || CA_CITIES.includes(n);
-}
-function inDateWindow(d){
-  // valid Date and within inclusive range
-  return d instanceof Date && !isNaN(d) && d >= STAY_MIN && d <= STAY_MAX;
-}
-function computeRooms(adults, children){
-  // Rule: “Number of guests cannot be more than 2 for each room.
-  // However infants can stay with adults even if the number of guests exceeds 2.”
-  // => We count only Adults + Children towards room capacity (2 per room).
-  const paying = Math.max(0, adults) + Math.max(0, children);
-  return Math.max(1, Math.ceil(paying / 2)); // at least 1 room if any guests
-}
-
-// Hook up the button if we are on the Stays page
-document.addEventListener("DOMContentLoaded", function(){
-  const btn = document.getElementById("staySearchBtn");
-  if(!btn) return;
-
-  const cityEl     = document.getElementById("stayCity");
-  const inEl       = document.getElementById("checkIn");
-  const outEl      = document.getElementById("checkOut");
-  const adEl       = document.getElementById("stayAdults");
-  const chEl       = document.getElementById("stayChildren");
-  const infEl      = document.getElementById("stayInfants");
-  const errBox     = document.getElementById("stayError");
-  const resultBox  = document.getElementById("stayResult");
-
-  btn.addEventListener("click", function(){
-    // clear messages
-    errBox.textContent = "";
-    resultBox.style.display = "none";
-    resultBox.innerHTML = "";
-
-    // 1) Required fields
-    if (isEmpty(cityEl.value) || isEmpty(inEl.value) || isEmpty(outEl.value)) {
-      errBox.textContent = "Please enter city, check-in, and check-out dates.";
-      return;
-    }
-
-    // 2) City must be in TX or CA (no regex)
-    if (!isCityTXorCA(cityEl.value)) {
-      errBox.textContent = "City must be in Texas or California.";
-      return;
-    }
-
-    // 3) Dates: valid & within 2024-09-01 .. 2024-12-01, and check-out after check-in
-    const inDate  = new Date(inEl.value);
-    const outDate = new Date(outEl.value);
-
-    if (!inDateWindow(inDate) || !inDateWindow(outDate)) {
-      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
-      return;
-    }
-    if (!(outDate > inDate)) {
-      errBox.textContent = "Check-out date must be after check-in date.";
-      return;
-    }
-
-    // 4) Guests: integers ≥ 0
-    const ad = parseIntSafe(adEl.value);
-    const ch = parseIntSafe(chEl.value);
-    const inf = parseIntSafe(infEl.value);
-
-    if (!Number.isInteger(ad) || ad < 0 ||
-        !Number.isInteger(ch) || ch < 0 ||
-        !Number.isInteger(inf) || inf < 0) {
-      errBox.textContent = "Guest counts must be whole numbers ≥ 0.";
-      return;
-    }
-
-    // 5) Capacity rule
-    if ((ad + ch + inf) < 1) {
-      errBox.textContent = "Please specify at least one guest.";
-      return;
-    }
-
-    const rooms = computeRooms(ad, ch);
-
-    // 6) Show summary
-    const lines = [
-      `<strong>City:</strong> ${cityEl.value.trim()}`,
-      `<strong>Check-in:</strong> ${inEl.value}`,
-      `<strong>Check-out:</strong> ${outEl.value}`,
-      `<strong>Guests:</strong> Adults ${ad}, Children ${ch}, Infants ${inf}`,
-      `<strong>Rooms needed:</strong> ${rooms}`
-    ];
-    resultBox.innerHTML = lines.join("<br>");
-    resultBox.style.display = "block";
-  });
-});
-
-/* ==================== CARS PAGE LOGIC (DOM methods) ==================== */
-
-// Allowed cities (lowercase, no regex needed)
-const TX_CITIES_CAR = [
-  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
-  "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
-];
-const CA_CITIES_CAR = [
-  "los angeles","san diego","san jose","san francisco","fresno","sacramento","long beach","oakland",
-  "bakersfield","anaheim","riverside","stockton","irvine","santa ana","chula vista","fremont","san bernardino"
-];
-
-// Valid car types (lowercase)
-const VALID_CAR_TYPES = ["economy","suv","compact","midsize"];
-
-// Date window (inclusive)
-const CAR_MIN = new Date("2024-09-01");
-const CAR_MAX = new Date("2024-12-01");
-
-// Helpers
-function lc(v){ return String(v || "").trim().toLowerCase(); }
-function isCityTXorCA_CAR(name){
-  const n = lc(name);
-  return TX_CITIES_CAR.includes(n) || CA_CITIES_CAR.includes(n);
-}
-function inDateWindow_CAR(d){
-  return d instanceof Date && !isNaN(d) && d >= CAR_MIN && d <= CAR_MAX;
-}
-
-document.addEventListener("DOMContentLoaded", function(){
-  const cityEl   = document.getElementById("carCity");
-  const typeEl   = document.getElementById("carType");
-  const inEl     = document.getElementById("carCheckIn");
-  const outEl    = document.getElementById("carCheckOut");
-  const btn      = document.getElementById("carSubmit");
-  const errBox   = document.getElementById("carError");
-  const result   = document.getElementById("carResult");
-
-  if (!btn) return;
-
-  btn.addEventListener("click", function () {
-    // reset
-    errBox.textContent = "";
-    result.style.display = "none";
-    result.innerHTML = "";
-
-    const city  = cityEl.value.trim();
-    const type  = typeEl.value;           // select value
-    const inVal = inEl.value;
-    const outVal= outEl.value;
-
-    // 1) Field-by-field required checks
-    if (!city)  return (errBox.textContent = "Please enter a city.");
-    if (!type)  return (errBox.textContent = "Please select a car type.");
-    if (!inVal) return (errBox.textContent = "Please choose a pick-up date.");
-    if (!outVal)return (errBox.textContent = "Please choose a drop-off date.");
-
-    // 2) City must be TX/CA
-    if (!isCityTXorCA_CAR(city)) {
-      errBox.textContent = "City must be a city in Texas or California.";
-      return;
-    }
-
-    // 3) Car type must be in allowed list 
-    const chosenType = lc(type);
-    if (!VALID_CAR_TYPES.includes(chosenType)) {
-      errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
-      return;
-    }
-
-    // 4) Dates window + order
-    const inDate  = new Date(inVal);
-    const outDate = new Date(outVal);
-    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
-      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
-      return;
-    }
-    if (!(outDate > inDate)) {
-      errBox.textContent = "Drop-off date must be after pick-up date.";
-      return;
-    }
-
-    // 5) Success
-    result.innerHTML = [
-      `<strong>City:</strong> ${city}`,
-      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
-      `<strong>Pick-up:</strong> ${inVal}`,
-      `<strong>Drop-off:</strong> ${outVal}`
-    ].join("<br>");
-    result.style.display = "block";
-  });
-});
-
 /******************** CART PAGE BOOTSTRAP *************************/
 document.addEventListener('DOMContentLoaded', () => {
   (async () => {
-    // Ensure DB is ready (safe no-op if already loaded)
     await ensureFlightsDbFromFile();
 
     const cartFlights = document.getElementById('cartFlights');
@@ -738,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookBtn     = document.getElementById('bookBtn');
     const bookMsg     = document.getElementById('bookMsg');
 
-    if (!cartFlights || !cartTotalEl) return; // not on cart page
+    if (!cartFlights || !cartTotalEl) return;
 
     const money = n => '$' + n.toFixed(2);
     let workingItem = null;
@@ -774,10 +520,10 @@ document.addEventListener('DOMContentLoaded', () => {
         labeledFlightHTML(f, workingItem.type === 'round' ? (i === 0 ? 'Departing flight' : 'Returning flight') : null)
       ).join('');
 
-      const adultPrice = legs.reduce((s,f)=>s+f.price, 0);
-      const childPrice = adultPrice * 0.70;
-      const infantPrice= adultPrice * 0.10;
-      const total = counts.adults*adultPrice + counts.children*childPrice + counts.infants*infantPrice;
+      const adultPrice  = legs.reduce((s,f)=>s+f.price, 0);
+      const childPrice  = adultPrice * 0.70;
+      const infantPrice = adultPrice * 0.10;
+      const total = (counts.adults|0)*adultPrice + (counts.children|0)*childPrice + (counts.infants|0)*infantPrice;
 
       cartFlights.innerHTML = `
         <p><strong>Trip:</strong> ${workingItem.type === 'round' ? 'Round trip' : 'One-way'}</p>
@@ -835,10 +581,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const totalPax = (counts.adults|0)+(counts.children|0)+(counts.infants|0);
       const pax = [];
       for (let k=1;k<=totalPax;k++){
-        const fn = data.get('fn'+k)?.trim();
-        const ln = data.get('ln'+k)?.trim();
-        const dob= data.get('dob'+k);
-        const ssn= data.get('ssn'+k)?.trim();
+        const fn = (data.get('fn'+k)  || '').toString().trim();
+        const ln = (data.get('ln'+k)  || '').toString().trim();
+        const dob= (data.get('dob'+k) || '').toString().trim();
+        const ssn= (data.get('ssn'+k) || '').toString().trim();
         if (!fn || !ln || !dob || !ssn) { alert('Please fill all passenger fields.'); return; }
         pax.push({ ssn, firstName: fn, lastName: ln, dob });
       }
@@ -861,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
         total
       };
 
-      // Persist booking + let user download it
       const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
       bookings.push(booking);
       localStorage.setItem('bookings', JSON.stringify(bookings));
@@ -872,7 +617,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
 
-      // Decrement seats for all booked legs (match by flightId + departDate)
       const db = getFlightsDb();
       const take = (counts.adults|0)+(counts.children|0)+(counts.infants|0);
       legs.forEach(f=>{
@@ -881,7 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       saveFlightsDb(db);
 
-      // Clear last cart item and refresh
       const cart = getCart(); cart.pop(); setCart(cart);
 
       if (bookMsg) {
@@ -901,4 +644,196 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCart();
     });
   })();
+});
+/* ==================== STAYS PAGE LOGIC (no RegExp) ==================== */
+
+// Allowed cities (Texas & California) – case-insensitive match without regex
+const TX_CITIES = [
+  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving","denton",
+  "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
+];
+const CA_CITIES = [
+  "los angeles","san diego","san jose","san francisco","fresno","sacramento","long beach","oakland",
+  "bakersfield","anaheim","riverside","stockton","irvine","santa ana","chula vista","fremont","san bernardino"
+];
+
+// Date window (inclusive): 2024-09-01 .. 2024-12-01
+const STAY_MIN = new Date("2024-09-01");
+const STAY_MAX = new Date("2024-12-01");
+
+// Helpers (no regex)
+function isEmpty(v){ return v === null || v === undefined || String(v).trim() === ""; }
+function parseIntSafe(v){ const n = Number(v); return Number.isFinite(n) ? n : NaN; }
+function isCityTXorCA(name){
+  const n = String(name || "").trim().toLowerCase();
+  return TX_CITIES.includes(n) || CA_CITIES.includes(n);
+}
+function inDateWindow(d){
+  return d instanceof Date && !isNaN(d) && d >= STAY_MIN && d <= STAY_MAX;
+}
+function computeRooms(adults, children){
+  const paying = Math.max(0, adults) + Math.max(0, children);
+  return Math.max(1, Math.ceil(paying / 2));
+}
+
+function initStaysPage(){
+  const btn = document.getElementById("staySearchBtn");
+  if(!btn) return; // not on stays.html
+
+  const cityEl     = document.getElementById("stayCity");
+  const inEl       = document.getElementById("checkIn");
+  const outEl      = document.getElementById("checkOut");
+  const adEl       = document.getElementById("stayAdults");
+  const chEl       = document.getElementById("stayChildren");
+  const infEl      = document.getElementById("stayInfants");
+  const errBox     = document.getElementById("stayError");
+  const resultBox  = document.getElementById("stayResult");
+
+  btn.addEventListener("click", function(e){
+    e.preventDefault(); // keep on page
+    errBox.textContent = "";
+    resultBox.style.display = "none";
+    resultBox.innerHTML = "";
+
+    if (isEmpty(cityEl.value) || isEmpty(inEl.value) || isEmpty(outEl.value)) {
+      errBox.textContent = "Please enter city, check-in, and check-out dates.";
+      return;
+    }
+
+    if (!isCityTXorCA(cityEl.value)) {
+      errBox.textContent = "City must be in Texas or California.";
+      return;
+    }
+
+    const inDate  = new Date(inEl.value);
+    const outDate = new Date(outEl.value);
+    if (!inDateWindow(inDate) || !inDateWindow(outDate)) {
+      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+      return;
+    }
+    if (!(outDate > inDate)) {
+      errBox.textContent = "Check-out date must be after check-in date.";
+      return;
+    }
+
+    const ad  = parseIntSafe(adEl.value);
+    const ch  = parseIntSafe(chEl.value);
+    const inf = parseIntSafe(infEl.value);
+
+    if (!Number.isInteger(ad) || ad < 0 ||
+        !Number.isInteger(ch) || ch < 0 ||
+        !Number.isInteger(inf) || inf < 0) {
+      errBox.textContent = "Guest counts must be whole numbers ≥ 0.";
+      return;
+    }
+
+    if ((ad + ch + inf) < 1) {
+      errBox.textContent = "Please specify at least one guest.";
+      return;
+    }
+
+    const rooms = computeRooms(ad, ch);
+    const lines = [
+      `<strong>City:</strong> ${cityEl.value.trim()}`,
+      `<strong>Check-in:</strong> ${inEl.value}`,
+      `<strong>Check-out:</strong> ${outEl.value}`,
+      `<strong>Guests:</strong> Adults ${ad}, Children ${ch}, Infants ${inf}`,
+      `<strong>Rooms needed:</strong> ${rooms}`
+    ];
+    resultBox.innerHTML = lines.join("<br>");
+    resultBox.style.display = "block";
+  });
+}
+/* ==================== CARS PAGE LOGIC (DOM methods) ==================== */
+
+// Allowed cities (lowercase)
+const TX_CITIES_CAR = [
+  "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
+  "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
+];
+const CA_CITIES_CAR = [
+  "los angeles","san diego","san jose","san francisco","fresno","sacramento","long beach","oakland",
+  "bakersfield","anaheim","riverside","stockton","irvine","santa ana","chula vista","fremont","san bernardino"
+];
+
+// Valid car types
+const VALID_CAR_TYPES = ["economy","suv","compact","midsize"];
+
+// Date window
+const CAR_MIN = new Date("2024-09-01");
+const CAR_MAX = new Date("2024-12-01");
+
+// Helpers
+function lc(v){ return String(v || "").trim().toLowerCase(); }
+function isCityTXorCA_CAR(name){
+  const n = lc(name);
+  return TX_CITIES_CAR.includes(n) || CA_CITIES_CAR.includes(n);
+}
+function inDateWindow_CAR(d){
+  return d instanceof Date && !isNaN(d) && d >= CAR_MIN && d <= CAR_MAX;
+}
+
+function initCarsPage(){
+  const btn = document.getElementById("carSubmit");
+  if (!btn) return; // not on cars.html
+
+  const cityEl   = document.getElementById("carCity");
+  const typeEl   = document.getElementById("carType");
+  const inEl     = document.getElementById("carCheckIn");
+  const outEl    = document.getElementById("carCheckOut");
+  const errBox   = document.getElementById("carError");
+  const result   = document.getElementById("carResult");
+
+  btn.addEventListener("click", function (e) {
+    e.preventDefault(); // keep on page
+    errBox.textContent = "";
+    result.style.display = "none";
+    result.innerHTML = "";
+
+    const city  = cityEl.value.trim();
+    const type  = typeEl.value;
+    const inVal = inEl.value;
+    const outVal= outEl.value;
+
+    if (!city)  { errBox.textContent = "Please enter a city."; return; }
+    if (!type)  { errBox.textContent = "Please select a car type."; return; }
+    if (!inVal) { errBox.textContent = "Please choose a pick-up date."; return; }
+    if (!outVal){ errBox.textContent = "Please choose a drop-off date."; return; }
+
+    if (!isCityTXorCA_CAR(city)) {
+      errBox.textContent = "City must be a city in Texas or California.";
+      return;
+    }
+
+    const chosenType = lc(type);
+    if (!VALID_CAR_TYPES.includes(chosenType)) {
+      errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize.";
+      return;
+    }
+
+    const inDate  = new Date(inVal);
+    const outDate = new Date(outVal);
+    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
+      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+      return;
+    }
+    if (!(outDate > inDate)) {
+      errBox.textContent = "Drop-off date must be after pick-up date.";
+      return;
+    }
+
+    result.innerHTML = [
+      `<strong>City:</strong> ${city}`,
+      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
+      `<strong>Pick-up:</strong> ${inVal}`,
+      `<strong>Drop-off:</strong> ${outVal}`
+    ].join("<br>");
+    result.style.display = "block";
+  });
+}
+
+/* === Ensure Stays & Cars initializers run (in addition to your other DOMContentLoaded hooks) === */
+document.addEventListener("DOMContentLoaded", function(){
+  initStaysPage();
+  initCarsPage();
 });
