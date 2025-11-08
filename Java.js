@@ -671,12 +671,12 @@ document.addEventListener("DOMContentLoaded", function(){
   const chEl       = document.getElementById("stayChildren");
   const infEl      = document.getElementById("stayInfants");
   const errBox     = document.getElementById("stayError");
-  const resultBox  = document.getElementById("stayResult");
+  const summaryBox = document.getElementById("staySummary");
 
   btn.addEventListener("click", function(){
     errBox.textContent = "";
-    resultBox.style.display = "none";
-    resultBox.innerHTML = "";
+    summaryBox.style.display = "none";
+    summaryBox.innerHTML = "";
 
     if (isEmpty(cityEl.value) || isEmpty(inEl.value) || isEmpty(outEl.value)) {
       errBox.textContent = "Please enter city, check-in, and check-out dates.";
@@ -698,14 +698,113 @@ document.addEventListener("DOMContentLoaded", function(){
     if ((ad + ch + inf) < 1) { errBox.textContent = "Please specify at least one guest."; return; }
 
     const rooms = computeRooms(ad, ch);
-    resultBox.innerHTML = [
-      `<strong>City:</strong> ${cityEl.value.trim()}`,
-      `<strong>Check-in:</strong> ${inEl.value}`,
-      `<strong>Check-out:</strong> ${outEl.value}`,
-      `<strong>Guests:</strong> Adults ${ad}, Children ${ch}, Infants ${inf}`,
-      `<strong>Rooms needed:</strong> ${rooms}`
+    summaryBox.innerHTML = [
+    `<strong>City:</strong> ${cityEl.value.trim()}`,
+    `<strong>Check-in:</strong> ${inEl.value}`,
+    `<strong>Check-out:</strong> ${outEl.value}`,
+    `<strong>Guests:</strong> Adults ${ad}, Children ${ch}, Infants ${inf}`,
+    `<strong>Rooms needed:</strong> ${rooms}`
     ].join("<br>");
-    resultBox.style.display = "block";
+    summaryBox.style.display = "block";
+
+    if(errBox.textContent == ""){
+      fetch("hotels.xml")
+      .then(res => res.text())
+      .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+      .then(xml => {
+        const hotels = Array.from(xml.getElementsByTagName("hotel"));
+        const city = cityEl.value.trim();
+  
+        const matchingHotels = hotels.filter(h => {
+          const hCity = h.getElementsByTagName("city")[0].textContent.trim().toLowerCase();
+          if (hCity !== city.toLowerCase()) return false;
+  
+          const availableDate = new Date(h.getElementsByTagName("date")[0].textContent);
+          const availRooms = parseInt(h.getElementsByTagName("availableRooms")[0].textContent);
+  
+          // Only show hotels where the available date overlaps the user’s stay window
+          // and where there are enough rooms.
+          const dateOK = (availableDate >= inDate && availableDate < outDate);
+          const roomOK = availRooms >= rooms;
+  
+          return dateOK && roomOK;
+        });
+  
+        // Display results
+        const resultBox  = document.getElementById("stayResults");
+        resultBox.style.display = "none";
+  
+        if (matchingHotels.length === 0) {
+          errBox.textContent = "No available hotels match your city, dates, or room needs.";
+          return;
+        }
+  
+        let html = `<h3>Available Hotels in ${city}</h3>`;
+        matchingHotels.forEach(h => {
+          const id = h.getElementsByTagName("hotelId")[0].textContent;
+          const name = h.getElementsByTagName("hotelName")[0].textContent;
+          const price = h.getElementsByTagName("pricePerNight")[0].textContent;
+          const avail = h.getElementsByTagName("availableRooms")[0].textContent;
+  
+          html += `
+            <div class="hotelCard">
+              <p><strong>${name}</strong> (ID: ${id})<br>
+              Price: $${price}/night<br>
+              Available rooms: ${avail}<br>
+              Rooms needed: ${rooms}</p>
+              <button class="addHotelBtn btn" 
+                      data-id="${id}" 
+                      data-name="${name}" 
+                      data-city="${city}" 
+                      data-price="${price}" 
+                      data-rooms="${rooms}"
+                      data-avail="${avail}">
+                Add to Cart
+              </button>
+            </div>`;
+        });
+  
+        document.getElementById("stayList").innerHTML = html;
+        resultBox.style.display = "block";
+  
+        // Hook up Add-to-Cart
+        document.querySelectorAll(".addHotelBtn").forEach(btn => {
+          btn.addEventListener("click", e => {
+            const d = e.target.dataset;
+            const booking = {
+            userId: Date.now(),
+            bookingNumber: "H" + Math.floor(Math.random() * 100000),
+            hotelId: d.id,
+            hotelName: d.name,
+            city: d.city,
+            checkIn: inEl.value,
+            checkOut: outEl.value,
+            adults: ad,
+            children: ch,
+            infants: inf,
+            rooms: parseInt(d.rooms),
+            pricePerNight: parseFloat(d.price),
+            totalPrice: parseFloat(d.price) * parseInt(d.rooms),
+            availableRooms: parseInt(d.avail, 10)
+          };
+  
+            // Preserve existing hotel cart items instead of overwriting
+            const existing = JSON.parse(localStorage.getItem("hotelCart") || "[]");
+            existing.push(booking);
+            localStorage.setItem("hotelCart", JSON.stringify(existing));
+  
+            alert(`${d.rooms} rooms in ${d.name} added to cart!`);
+            resultBox.style.display = "none";
+
+          });
+        });
+      })
+      .catch(err => {
+        console.error("Error reading hotel XML:", err);
+        document.getElementById("stayError").textContent = "Error loading hotel data.";
+      });
+    }
+
   });
 });
 
@@ -791,3 +890,101 @@ function initPassengersPanel() {
   }, { once: false });
 }
 document.addEventListener('DOMContentLoaded', initPassengersPanel);
+// ========== HOTEL CART DISPLAY (HW3 - Part 5) ==========
+document.addEventListener("DOMContentLoaded", function() {
+  const hotelCartData = localStorage.getItem("hotelCart");
+  const cartHotelsDiv = document.getElementById("cartHotels");
+  const totalSpan = document.getElementById("cartTotalHotels");
+
+  if (!cartHotelsDiv || !hotelCartData) return; // Not on cart page or no hotel data
+
+  const hotelCart = JSON.parse(hotelCartData);
+  if (!Array.isArray(hotelCart) || hotelCart.length === 0) {
+    cartHotelsDiv.innerHTML += "<p>No hotel bookings found.</p>";
+    return;
+  }
+
+  let total = 0;
+  let html = "<h3>Hotel Bookings</h3>";
+
+  hotelCart.forEach(h => {
+    total += h.totalPrice;
+
+    html += `
+      <div class="hotelCartItem" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+        <p><strong>${h.hotelName}</strong> (ID: ${h.hotelId})</p>
+        <p>City: ${h.city}</p>
+        <p>Check-in: ${h.checkIn}</p>
+        <p>Check-out: ${h.checkOut}</p>
+        <p>Guests: ${h.adults} Adults, ${h.children} Children, ${h.infants} Infants</p>
+        <p>Rooms: ${h.rooms}</p>
+        <p>Price per night: $${h.pricePerNight.toFixed(2)}</p>
+        <p><strong>Total Price: $${h.totalPrice.toFixed(2)}</strong></p>
+        <p>Booking #: ${h.bookingNumber}</p>
+        <p>User ID: ${h.userId}</p>
+      </div>
+    `;
+  });
+
+  cartHotelsDiv.innerHTML += html;
+  totalSpan.textContent = `$${total.toFixed(2)}`;
+
+  const bookHotelsBtn = document.getElementById("bookHotelsBtn");
+  bookHotelsBtn.style.display = "block";
+  const msgBox = document.getElementById("bookHotelsMsg");
+  if (!bookHotelsBtn) return;
+
+  bookHotelsBtn.addEventListener("click", function() {
+  const hotelCartData = localStorage.getItem("hotelCart");
+  if (!hotelCartData) {
+    msgBox.textContent = "No hotels to book!";
+    msgBox.style.display = "block";
+    return;
+  }
+
+  const hotelCart = JSON.parse(hotelCartData);
+  if (!Array.isArray(hotelCart) || hotelCart.length === 0) {
+    msgBox.textContent = "No hotels to book!";
+    msgBox.style.display = "block";
+    return;
+  }
+
+  // Generate JSON file of booked hotels
+  const jsonStr = JSON.stringify(hotelCart, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "hotel_bookings.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  msgBox.textContent = "Hotel booking JSON file generated successfully!";
+  msgBox.style.display = "block";
+  cartHotelsDiv.innerHTML = "";
+  totalSpan.textContent = "$0.00";
+  bookHotelsBtn.style.display = "none";
+  localStorage.removeItem("hotelCart");
+
+  // Send updates sequentially to avoid concurrent-write races on hotels.xml
+  (async () => {
+    for (const h of hotelCart) {
+      const updatedAvailableRooms = Math.max(0, h.availableRooms - h.rooms);
+      try {
+        const resp = await fetch('/update_hotel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hotelId: h.hotelId, newAvailableRooms: updatedAvailableRooms })
+        });
+        const text = await resp.text();
+        console.log(`Updated ${h.hotelName}: ${text}`);
+      } catch (err) {
+        console.error('Failed to update', h.hotelId, err);
+      }
+    }
+  })();
+
+
+});
+
+});
+

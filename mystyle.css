@@ -200,7 +200,10 @@ input[type="text"], input[type="date"] {
 .btn:hover { background:#084dbf; }
 .error { color:#b91c1c; font-weight:700; margin-top:10px; }
 .summary { color: #111;  margin-top:10px; background:#f6fff8; border:1px solid #ccebd6; padding:12px; border-radius:8px; }
-
+#flightResults.summary, #stayResults.summary{
+  margin-top: 0;
+  margin-left: 10px;
+}
 /* Stays Page */
 #stays-section {
   position: relative;
@@ -229,14 +232,11 @@ input[type="text"], input[type="date"] {
 #stays-section input[type="number"] {
   width:100%; padding:10px; border:1px solid #bbb; border-radius:6px; box-sizing:border-box; background:#fff;
 }
-#stays-section label,
-#stays-section h2,
-#stays-section h3,
-#stays-section p { color: #fff; }
-#stays-section .summary {
+#stays-section label { color: #fff; }
+/* #stays-section .summary {
   color: #111; background: rgba(255,255,255,0.9);
   border: 1px solid #ccc; margin-top:12px; border-radius:8px;
-}
+} */
 #stays-section .error {
   color:#b91c1c; background:rgba(255,255,255,0.8);
   padding:8px; margin-top:12px; border-radius:8px;
