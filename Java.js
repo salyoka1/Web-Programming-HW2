@@ -813,13 +813,15 @@ document.addEventListener("DOMContentLoaded", function() {
   const cartHotelsDiv = document.getElementById("cartHotels");
   const totalSpan = document.getElementById("cartTotalHotels");
 
-  if (!cartHotelsDiv || !hotelCartData) return; // Not on cart page or no hotel data
-
-  const hotelCart = JSON.parse(hotelCartData);
+ if (!cartHotelsDiv) return; // not on cart page
+  const hotelCart = JSON.parse(hotelCartData || "[]");
   if (!Array.isArray(hotelCart) || hotelCart.length === 0) {
-    cartHotelsDiv.innerHTML += "<p>No hotel bookings found.</p>";
-    return;
-  }
+  cartHotelsDiv.innerHTML = "<p>No hotel bookings found.</p>";
+  if (totalSpan) totalSpan.textContent = "$0.00";
+  const bookHotelsBtn = document.getElementById("bookHotelsBtn");
+  if (bookHotelsBtn) bookHotelsBtn.style.display = "none";
+  return;
+}
 
   let total = 0;
   let html = "<h3>Hotel Bookings</h3>";
