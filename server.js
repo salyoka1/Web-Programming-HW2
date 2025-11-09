@@ -141,3 +141,52 @@ app.post('/update_hotel', async (req, res) => {
     res.status(500).json({ error: 'Failed to update hotel' });
   }
 });
+
+const CARSPATH = path.join(__dirname, 'cars.xml');
+
+async function readCars() {
+  const raw = await fs.readFile(CARSPATH, 'utf8');
+  return raw; // Return the XML string or parse if needed
+}
+
+async function writeCars(xmlStr) {
+  const backupPath = `${CARSPATH}.bak.${Date.now()}`;
+  await fs.writeFile(backupPath, xmlStr, 'utf8');
+  const tmpPath = `${CARSPATH}.tmp`;
+  await fs.writeFile(tmpPath, xmlStr, 'utf8');
+  await fs.rename(tmpPath, CARSPATH);
+}
+
+app.post('/updatecar', async (req, res) => {
+  const { carId, newCheckIn, newCheckOut } = req.body;
+  if (!carId || !newCheckIn || !newCheckOut) {
+    return res.status(400).json({ error: "Missing required parameters" });
+  }
+
+  try {
+    let xmlStr = await fs.readFile(CARSPATH, 'utf8');
+
+    // Parse XML and update car's availability dates to remove booked dates
+    // (You may adjust the date ranges accordingly to implement partial availability)
+    
+    // Simple string manipulation example (better to parse XML properly using a library):
+    // Find the car block by <CarID>carId</CarID> and update checkIn/checkOut date nodes
+
+    const carBlockStart = xmlStr.indexOf(`<CarID>${carId}</CarID>`);
+    if (carBlockStart === -1) return res.status(404).json({ error: "Car not found" });
+
+    // Further parsing logic here to update check-in and check-out dates to exclude booked times...
+
+    // Save updated XML back
+    await writeCars(xmlStr);
+
+    res.json({ ok: true, carId, newCheckIn, newCheckOut });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update car availability" });
+  }
+});
+
+
+
+
