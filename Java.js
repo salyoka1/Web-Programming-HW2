@@ -1170,46 +1170,54 @@ function loadCarCart() {
 function setupBookCarsButton() {
   const bookCarsBtn = document.getElementById("bookCarsBtn");
   const msgBox = document.getElementById("bookCarsMsg");
+  if (!bookCarsBtn) return;
 
-  if(bookCarsBtn) {
-    bookCarsBtn.style.display = "block";
-    bookCarsBtn.onclick = () => {
-      const carCartData = localStorage.getItem("carCart");
-      if (!carCartData) {
-        if(msgBox) {
-          msgBox.textContent = "No cars to book!";
-          msgBox.style.display = "block";
-        }
-        return;
-      }
+  // show only if there are items
+  let hasCars = false;
+  try {
+    const arr = JSON.parse(localStorage.getItem("carCart") || "[]");
+    hasCars = Array.isArray(arr) && arr.length > 0;
+  } catch (_) {}
 
-      const carCart = JSON.parse(carCartData);
-      if(carCart.length === 0) {
-        if(msgBox) {
-          msgBox.textContent = "No cars to book!";
-          msgBox.style.display = "block";
-        }
-        return;
-      }
+  bookCarsBtn.style.display = hasCars ? "block" : "none";
 
-      const jsonStr = JSON.stringify(carCart, null, 2);
-      const blob = new Blob([jsonStr], {type:"application/json"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "car_bookings.json";
-      a.click();
-      URL.revokeObjectURL(a.href);
-
-      if(msgBox) {
-        msgBox.textContent = "Car booking JSON file generated successfully!";
+  bookCarsBtn.onclick = () => {
+    const carCartData = localStorage.getItem("carCart");
+    if (!carCartData || JSON.parse(carCartData).length === 0) {
+      if (msgBox) {
+        msgBox.textContent = "No cars to book!";
         msgBox.style.display = "block";
       }
-
-      localStorage.removeItem("carCart");
-      //loadCarCart();
       bookCarsBtn.style.display = "none";
-    };
-  }
+      return;
+    }
+
+    const carCart = JSON.parse(carCartData);
+
+    // Download JSON
+    const jsonStr = JSON.stringify(carCart, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "car_bookings.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    // Feedback + clear cart
+    if (msgBox) {
+      msgBox.textContent = "Car booking JSON file generated successfully!";
+      msgBox.style.display = "block";
+    }
+    localStorage.removeItem("carCart");
+
+    // Hide button now that cart is empty
+    bookCarsBtn.style.display = "none";
+
+    // Optional: refresh any cart UI if you have a renderer
+    if (typeof loadCarCart === "function") {
+      loadCarCart();
+    }
+  };
 }
 
 
