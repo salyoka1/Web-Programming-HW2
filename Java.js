@@ -1076,7 +1076,7 @@ document.addEventListener("DOMContentLoaded", function(){
                 const userCheckIn = inEl.value;
                 const userCheckOut = outEl.value;
 
-                alert(`Car booked! \nID: ${car.id}\nCity: ${car.city}\nType: ${car.type}\nFrom: ${userCheckIn}\nTo: ${userCheckOut}\nPrice/Day: ${car.price}`);
+                alert(`Car added to cart! \nID: ${car.id}\nCity: ${car.city}\nType: ${car.type}\nFrom: ${userCheckIn}\nTo: ${userCheckOut}\nPrice/Day: ${car.price}`);
 
                 addCarToCart({
                   id: car.id,
