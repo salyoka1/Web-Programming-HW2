@@ -874,6 +874,96 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 });
 
+document.getElementById('carSubmit').addEventListener('click', function() {
+  const cityInput = document.getElementById('carCity').value.trim().toLowerCase();
+  const checkIn = document.getElementById('carCheckIn').value;
+  const checkOut = document.getElementById('carCheckOut').value;
+  const carType = document.getElementById('carType').value.trim().toLowerCase();
+  const resultDiv = document.getElementById('carResult');
+  resultDiv.innerHTML = '';
+  if(!cityInput || !checkIn || !checkOut || !carType || carType === 'Select') {
+    resultDiv.innerHTML = '<span style="color:red;">Please fill all fields and select a car type.</span>';
+    return;
+  }
+  fetch('cars.xml')
+    .then(res => res.text())
+    .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+    .then(data => {
+      const cars = data.getElementsByTagName("Car");
+      let matches = [];
+      for (let car of cars) {
+        const city = car.getElementsByTagName("City")[0].textContent.trim().toLowerCase();
+        const type = car.getElementsByTagName("Type")[0].textContent.trim().toLowerCase();
+        const carCheckIn = car.getElementsByTagName("CheckInDate")[0].textContent.trim();
+        const carCheckOut = car.getElementsByTagName("CheckOutDate")[0].textContent.trim();
+        // exact city and type match, and requested period within car's available period
+        if (
+          city === cityInput &&
+          type === carType &&
+          checkIn >= carCheckIn &&
+          checkOut <= carCheckOut
+        ) {
+          matches.push({
+            id: car.getElementsByTagName("CarID")[0].textContent,
+            city: car.getElementsByTagName("City")[0].textContent,
+            type: car.getElementsByTagName("Type")[0].textContent,
+            carCheckIn,
+            carCheckOut,
+            price: car.getElementsByTagName("PricePerDay")[0].textContent
+          });
+        }
+      }
+      if(matches.length === 0) {
+        resultDiv.innerHTML = '<span style="color:orange;">No cars found matching your criteria.</span>';
+      } else {
+        let html = '<table border="1" cellpadding="4"><tr><th>Car ID</th><th>City</th><th>Type</th><th>Available From</th><th>Available To</th><th>Price/Day</th></tr>';
+        for (let match of matches) {
+          html += `<tr>
+            <td>${match.id}</td>
+            <td>${match.city}</td>
+            <td>${match.type}</td>
+            <td>${match.carCheckIn}</td>
+            <td>${match.carCheckOut}</td>
+            <td>${match.price}</td>
+            <td>
+              <button class="bookCarBtn" data-car='${JSON.stringify(match)}'>Book</button>
+            </td>
+          </tr>`;
+        }
+        html += '</table>';
+        resultDiv.innerHTML = html;
+
+        // Add book button handlers
+        const bookBtns = document.querySelectorAll('.bookCarBtn');
+        bookBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            const car = JSON.parse(this.getAttribute('data-car'));
+            // Do booking logic here (show message for now)
+            const userCheckIn = document.getElementById('carCheckIn').value;
+            const userCheckOut = document.getElementById('carCheckOut').value;
+
+            // Show booking confirmation with user selected dates
+            alert(`Car booked! \nID: ${car.id}\nCity: ${car.city}\nType: ${car.type}\nFrom: ${userCheckIn}\nTo: ${userCheckOut}\nPrice/Day: ${car.price}`);
+
+            // Add to cart/storage with user selected dates
+            addCarToCart({
+            id: car.id,
+            city: car.city,
+            type: car.type,
+            checkIn: userCheckIn,
+            checkOut: userCheckOut,
+            price: car.price
+          });
+  });
+});
+
+      }
+    })
+    .catch(e => { resultDiv.innerHTML = '<span style="color:red;">Error loading car data.</span>'; });
+});
+
+
+
 /* ================= PASSENGERS PANEL (robust init) ================= */
 function initPassengersPanel() {
   const paxBtn   = document.getElementById('paxBtn');
@@ -987,4 +1077,70 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 });
+// ====== CARS CART DISPLAY=========
+document.addEventListener("DOMContentLoaded", function() {
+  const carCartData = localStorage.getItem("carCart");
+  const cartCarsDiv = document.getElementById("cartCars");
+  const totalSpan = document.getElementById("cartTotalCars");
 
+  if (!cartCarsDiv || !carCartData) return; // Not on cart page or no car data
+
+  const carCart = JSON.parse(carCartData);
+  if (!Array.isArray(carCart) || carCart.length === 0) {
+    cartCarsDiv.innerHTML += "<p>No car bookings found.</p>";
+    totalSpan.textContent = "$0.00";
+    return;
+  }
+
+  let total = 0;
+  let html = "<h3>Car Bookings</h3>";
+
+  carCart.forEach(c => {
+    total += Number(c.price);
+
+    html += `
+      <div class="carCartItem" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+        <p><strong>Car ID: ${c.id}</strong></p>
+        <p>City: ${c.city}</p>
+        <p>Type: ${c.type}</p>
+        <p>Check-in: ${c.checkIn}</p>
+        <p>Check-out: ${c.checkOut}</p>
+        <p>Price per day: $${Number(c.price).toFixed(2)}</p>
+      </div>
+    `;
+  });
+
+  cartCarsDiv.innerHTML += html;
+  totalSpan.textContent = `$${total.toFixed(2)}`;
+
+  const bookCarsBtn = document.getElementById("bookCarsBtn");
+  const msgBox = document.getElementById("bookCarsMsg");
+
+  if (bookCarsBtn) {
+    bookCarsBtn.style.display = "block";
+    bookCarsBtn.addEventListener("click", function() {
+      if (!carCartData || carCart.length === 0) {
+        msgBox.textContent = "No cars to book!";
+        msgBox.style.display = "block";
+        return;
+      }
+
+      // Generate JSON file of booked cars (optional)
+      const jsonStr = JSON.stringify(carCart, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "car_bookings.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+
+      msgBox.textContent = "Car booking JSON file generated successfully!";
+      msgBox.style.display = "block";
+
+      cartCarsDiv.innerHTML = "";
+      totalSpan.textContent = "$0.00";
+      bookCarsBtn.style.display = "none";
+      localStorage.removeItem("carCart");
+    });
+  }
+});
