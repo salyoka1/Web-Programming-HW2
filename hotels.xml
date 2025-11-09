@@ -5,7 +5,7 @@
     <hotelId>TX001</hotelId>
     <hotelName>Grand Dallas Hotel</hotelName>
     <city>Dallas</city>
-    <availableRooms>4</availableRooms>
+    <availableRooms>3</availableRooms>
     <date>2024-09-10</date>
     <pricePerNight>140</pricePerNight>
   </hotel>

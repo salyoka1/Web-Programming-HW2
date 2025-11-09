@@ -906,6 +906,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /* ==================== CARS PAGE LOGIC (DOM methods) ==================== */
+// Add car booking to localStorage cart
 const TX_CITIES_CAR = [
   "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
   "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
@@ -925,139 +926,293 @@ function isCityTXorCA_CAR(name){
 function inDateWindow_CAR(d){
   return d instanceof Date && !isNaN(d) && d >= CAR_MIN && d <= CAR_MAX;
 }
+
+function addCarToCart(carBooking) {
+  const existing = JSON.parse(localStorage.getItem("carCart")) || [];
+  console.log("Current cart before insert:", existing);
+
+  const duplicate = existing.find(c =>
+    c.id === carBooking.id &&
+    c.checkIn === carBooking.checkIn &&
+    c.checkOut === carBooking.checkOut
+  );
+
+  if (!duplicate) {
+    existing.push(carBooking);
+    console.log("Adding booking:", carBooking);
+    localStorage.setItem("carCart", JSON.stringify(existing));
+    console.log("Updated cart after insert:", existing);
+  } else {
+    console.warn("Duplicate booking detected for:", carBooking);
+    alert("This car is already booked for the selected dates.");
+  }
+
+  // For extra debugging, show raw localStorage value after setting:
+  console.log("LocalStorage value:", localStorage.getItem("carCart"));
+}
+
 document.addEventListener("DOMContentLoaded", function(){
-  const cityEl   = document.getElementById("carCity");
-  const typeEl   = document.getElementById("carType");
-  const inEl     = document.getElementById("carCheckIn");
-  const outEl    = document.getElementById("carCheckOut");
-  const btn      = document.getElementById("carSubmit");
-  const errBox   = document.getElementById("carError");
-  const result   = document.getElementById("carResult");
+  const cityEl = document.getElementById("carCity");
+  const typeEl = document.getElementById("carType");
+  const inEl = document.getElementById("carCheckIn");
+  const outEl = document.getElementById("carCheckOut");
+  const btn = document.getElementById("carSubmit");
+  const errBox = document.getElementById("carError");
+  const result = document.getElementById("carResult");
 
-  if (!btn) return;
+  if (btn) {
+    btn.addEventListener("click", function () {
+      errBox.textContent = "";
+      result.style.display = "none";
+      result.innerHTML = "";
 
-  btn.addEventListener("click", function () {
-    errBox.textContent = "";
-    result.style.display = "none";
-    result.innerHTML = "";
+      const city  = cityEl.value.trim();
+      const type  = typeEl.value;
+      const inVal = inEl.value;
+      const outVal = outEl.value;
 
-    const city  = cityEl.value.trim();
-    const type  = typeEl.value;
-    const inVal = inEl.value;
-    const outVal= outEl.value;
+      if (!city)  { errBox.textContent = "Please enter a city."; return; }
+      if (!type)  { errBox.textContent = "Please select a car type."; return; }
+      if (!inVal) { errBox.textContent = "Please choose a pick-up date."; return; }
+      if (!outVal){ errBox.textContent = "Please choose a drop-off date."; return; }
 
-    if (!city)  { errBox.textContent = "Please enter a city."; return; }
-    if (!type)  { errBox.textContent = "Please select a car type."; return; }
-    if (!inVal) { errBox.textContent = "Please choose a pick-up date."; return; }
-    if (!outVal){ errBox.textContent = "Please choose a drop-off date."; return; }
+      if (!isCityTXorCA_CAR(city)) { errBox.textContent = "City must be a city in Texas or California."; return; }
 
-    if (!isCityTXorCA_CAR(city)) { errBox.textContent = "City must be a city in Texas or California."; return; }
+      const chosenType = lc(type);
+      if (!VALID_CAR_TYPES.includes(chosenType)) { errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize."; return; }
 
-    const chosenType = lc(type);
-    if (!VALID_CAR_TYPES.includes(chosenType)) { errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize."; return; }
+      const inDate = new Date(inVal);
+      const outDate = new Date(outVal);
+      if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
+        errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+        return;
+      }
+      if (!(outDate > inDate)) {
+        errBox.textContent = "Drop-off date must be after pick-up date.";
+        return;
+      }
 
-    const inDate  = new Date(inVal);
-    const outDate = new Date(outVal);
-    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) { errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01."; return; }
-    if (!(outDate > inDate)) { errBox.textContent = "Drop-off date must be after pick-up date."; return; }
 
-    result.innerHTML = [
-      `<strong>City:</strong> ${city}`,
-      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
-      `<strong>Pick-up:</strong> ${inVal}`,
-      `<strong>Drop-off:</strong> ${outVal}`
-    ].join("<br>");
-    result.style.display = "block";
-  });
+      result.innerHTML = [
+        `<strong>City:</strong> ${city}`,
+        `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
+        `<strong>Pick-up:</strong> ${inVal}`,
+        `<strong>Drop-off:</strong> ${outVal}`
+      ].join("<br>");
+      result.style.display = "block";
+    });
+  }
+
+  // Search cars.xml and display matching cars, add book buttons
+  if (btn) {
+    btn.addEventListener('click', function() {
+      const cityInput = cityEl.value.trim().toLowerCase();
+      const checkIn = inEl.value;
+      const checkOut = outEl.value;
+      const carType = typeEl.value.trim().toLowerCase();
+      const resultDiv = result;
+
+      resultDiv.innerHTML = '';
+      if (!cityInput || !checkIn || !checkOut || !carType || carType === 'Select') {
+        resultDiv.innerHTML = '<span style="color:red;">Please fill all fields and select a car type.</span>';
+        return;
+      }
+
+      fetch('cars.xml')
+        .then(res => res.text())
+        .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+        .then(data => {
+          const cars = data.getElementsByTagName("Car");
+          let matches = [];
+          for (let car of cars) {
+            const city = car.getElementsByTagName("City")[0].textContent.trim().toLowerCase();
+            const type = car.getElementsByTagName("Type")[0].textContent.trim().toLowerCase();
+            const carCheckIn = car.getElementsByTagName("CheckInDate")[0].textContent.trim();
+            const carCheckOut = car.getElementsByTagName("CheckOutDate")[0].textContent.trim();
+
+            if (
+              city === cityInput &&
+              type === carType &&
+              checkIn >= carCheckIn &&
+              checkOut <= carCheckOut
+            ) {
+              matches.push({
+                id: car.getElementsByTagName("CarID")[0].textContent,
+                city: car.getElementsByTagName("City")[0].textContent,
+                type: car.getElementsByTagName("Type")[0].textContent,
+                carCheckIn,
+                carCheckOut,
+                price: car.getElementsByTagName("PricePerDay")[0].textContent
+              });
+            }
+          }
+
+          if (matches.length === 0) {
+            resultDiv.innerHTML = '<span style="color:orange;">No cars found matching your criteria.</span>';
+          } else {
+            let html = '<table border="1" cellpadding="4"><tr><th>Car ID</th><th>City</th><th>Type</th><th>Available From</th><th>Available To</th><th>Price/Day</th><th>Book</th></tr>';
+            for (let match of matches) {
+              html += `<tr>
+                <td>${match.id}</td>
+                <td>${match.city}</td>
+                <td>${match.type}</td>
+                <td>${match.carCheckIn}</td>
+                <td>${match.carCheckOut}</td>
+                <td>${match.price}</td>
+                <td><button class="bookCarBtn" data-car='${JSON.stringify(match)}'>Book</button></td>
+              </tr>`;
+            }
+            html += '</table>';
+
+            resultDiv.innerHTML = html;
+
+            // Setup book button handlers
+            const bookBtns = document.querySelectorAll('.bookCarBtn');
+            bookBtns.forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                const car = JSON.parse(this.getAttribute('data-car'));
+                const userCheckIn = inEl.value;
+                const userCheckOut = outEl.value;
+
+                alert(`Car booked! \nID: ${car.id}\nCity: ${car.city}\nType: ${car.type}\nFrom: ${userCheckIn}\nTo: ${userCheckOut}\nPrice/Day: ${car.price}`);
+
+                addCarToCart({
+                  id: car.id,
+                  city: car.city,
+                  type: car.type,
+                  checkIn: userCheckIn,
+                  checkOut: userCheckOut,
+                  price: car.price
+                });
+              });
+            });
+          }
+        })
+        .catch(e => {
+          resultDiv.innerHTML = '<span style="color:red;">Error loading car data.</span>';
+        });
+    });
+  }
+
+  
+  setupBookCarsButton();
+  loadCarCart();
 });
 
-document.getElementById('carSubmit').addEventListener('click', function() {
-  const cityInput = document.getElementById('carCity').value.trim().toLowerCase();
-  const checkIn = document.getElementById('carCheckIn').value;
-  const checkOut = document.getElementById('carCheckOut').value;
-  const carType = document.getElementById('carType').value.trim().toLowerCase();
-  const resultDiv = document.getElementById('carResult');
-  resultDiv.innerHTML = '';
-  if(!cityInput || !checkIn || !checkOut || !carType || carType === 'Select') {
-    resultDiv.innerHTML = '<span style="color:red;">Please fill all fields and select a car type.</span>';
+function loadCarCart() {
+  const cartCarsDiv = document.getElementById("cartCars");
+  const totalSpan = document.getElementById("cartTotalCars");
+
+  if (!cartCarsDiv) {
+    console.log("Cart container not found");
     return;
   }
-  fetch('cars.xml')
-    .then(res => res.text())
-    .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
-    .then(data => {
-      const cars = data.getElementsByTagName("Car");
-      let matches = [];
-      for (let car of cars) {
-        const city = car.getElementsByTagName("City")[0].textContent.trim().toLowerCase();
-        const type = car.getElementsByTagName("Type")[0].textContent.trim().toLowerCase();
-        const carCheckIn = car.getElementsByTagName("CheckInDate")[0].textContent.trim();
-        const carCheckOut = car.getElementsByTagName("CheckOutDate")[0].textContent.trim();
-        // exact city and type match, and requested period within car's available period
-        if (
-          city === cityInput &&
-          type === carType &&
-          checkIn >= carCheckIn &&
-          checkOut <= carCheckOut
-        ) {
-          matches.push({
-            id: car.getElementsByTagName("CarID")[0].textContent,
-            city: car.getElementsByTagName("City")[0].textContent,
-            type: car.getElementsByTagName("Type")[0].textContent,
-            carCheckIn,
-            carCheckOut,
-            price: car.getElementsByTagName("PricePerDay")[0].textContent
-          });
-        }
-      }
-      if(matches.length === 0) {
-        resultDiv.innerHTML = '<span style="color:orange;">No cars found matching your criteria.</span>';
-      } else {
-        let html = '<table border="1" cellpadding="4"><tr><th>Car ID</th><th>City</th><th>Type</th><th>Available From</th><th>Available To</th><th>Price/Day</th></tr>';
-        for (let match of matches) {
-          html += `<tr>
-            <td>${match.id}</td>
-            <td>${match.city}</td>
-            <td>${match.type}</td>
-            <td>${match.carCheckIn}</td>
-            <td>${match.carCheckOut}</td>
-            <td>${match.price}</td>
-            <td>
-              <button class="bookCarBtn" data-car='${JSON.stringify(match)}'>Book</button>
-            </td>
-          </tr>`;
-        }
-        html += '</table>';
-        resultDiv.innerHTML = html;
 
-        // Add book button handlers
-        const bookBtns = document.querySelectorAll('.bookCarBtn');
-        bookBtns.forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            const car = JSON.parse(this.getAttribute('data-car'));
-            // Do booking logic here (show message for now)
-            const userCheckIn = document.getElementById('carCheckIn').value;
-            const userCheckOut = document.getElementById('carCheckOut').value;
+  const carCartData = localStorage.getItem("carCart");
+  console.log("Raw carCartData from localStorage:", carCartData);
 
-            // Show booking confirmation with user selected dates
-            alert(`Car booked! \nID: ${car.id}\nCity: ${car.city}\nType: ${car.type}\nFrom: ${userCheckIn}\nTo: ${userCheckOut}\nPrice/Day: ${car.price}`);
+  if (!carCartData) {
+    cartCarsDiv.innerHTML = "<p>No car bookings found.</p>";
+    if (totalSpan) totalSpan.textContent = "$0.00";
+    console.log("No car bookings found in localStorage");
+    return;
+  }
 
-            // Add to cart/storage with user selected dates
-            addCarToCart({
-            id: car.id,
-            city: car.city,
-            type: car.type,
-            checkIn: userCheckIn,
-            checkOut: userCheckOut,
-            price: car.price
-          });
+  const carCart = JSON.parse(carCartData);
+  console.log("Parsed carCart array:", carCart);
+
+  if (!Array.isArray(carCart) || carCart.length === 0) {
+    cartCarsDiv.innerHTML = "<p>No car bookings found.</p>";
+    if (totalSpan) totalSpan.textContent = "$0.00";
+    console.log("Car cart is empty or not an array");
+    return;
+  }
+
+  let total = 0;
+  let html = "<h3>Car Bookings</h3>";
+
+  carCart.forEach((c, i) => {
+    const checkInDate = new Date(c.checkIn);
+    const checkOutDate = new Date(c.checkOut);
+    const diffTime = Math.abs(checkOutDate - checkInDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;  // Inclusive days
+    const totalPrice = Number(c.price) * diffDays;
+    total += totalPrice;
+
+    console.log(`Booking ${i}:`, c);
+    console.log(`Check-in date: ${c.checkIn}, Check-out date: ${c.checkOut}`);
+    console.log(`Days booked: ${diffDays}`);
+    console.log(`Price per day: ${c.price}`);
+    console.log(`Total price for booking: ${totalPrice}`);
+
+    html += `
+      <div class="carCartItem" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+        <p><strong>Car ID: ${c.id}</strong></p>
+        <p>City: ${c.city}</p>
+        <p>Type: ${c.type}</p>
+        <p>Check-in: ${c.checkIn}</p>
+        <p>Check-out: ${c.checkOut}</p>
+        <p>Price per day: $${Number(c.price).toFixed(2)}</p>
+        <p><strong>Total Price: $${totalPrice.toFixed(2)}</strong></p>
+      </div>
+    `;
   });
-});
 
+  console.log(`Grand total price for all bookings: $${total.toFixed(2)}`);
+
+  cartCarsDiv.innerHTML = html;
+  if (totalSpan) {
+    totalSpan.textContent = `$${total.toFixed(2)}`;
+  }
+}
+
+
+function setupBookCarsButton() {
+  const bookCarsBtn = document.getElementById("bookCarsBtn");
+  const msgBox = document.getElementById("bookCarsMsg");
+
+  if(bookCarsBtn) {
+    bookCarsBtn.style.display = "block";
+    bookCarsBtn.onclick = () => {
+      const carCartData = localStorage.getItem("carCart");
+      if (!carCartData) {
+        if(msgBox) {
+          msgBox.textContent = "No cars to book!";
+          msgBox.style.display = "block";
+        }
+        return;
       }
-    })
-    .catch(e => { resultDiv.innerHTML = '<span style="color:red;">Error loading car data.</span>'; });
-});
+
+      const carCart = JSON.parse(carCartData);
+      if(carCart.length === 0) {
+        if(msgBox) {
+          msgBox.textContent = "No cars to book!";
+          msgBox.style.display = "block";
+        }
+        return;
+      }
+
+      const jsonStr = JSON.stringify(carCart, null, 2);
+      const blob = new Blob([jsonStr], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "car_bookings.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+
+      if(msgBox) {
+        msgBox.textContent = "Car booking JSON file generated successfully!";
+        msgBox.style.display = "block";
+      }
+
+      localStorage.removeItem("carCart");
+      //loadCarCart();
+      bookCarsBtn.style.display = "none";
+    };
+  }
+}
+
+
 
 
 
@@ -1079,69 +1234,4 @@ function initPassengersPanel() {
 document.addEventListener('DOMContentLoaded', initPassengersPanel);
 
 // ====== CARS CART DISPLAY=========
-document.addEventListener("DOMContentLoaded", function() {
-  const carCartData = localStorage.getItem("carCart");
-  const cartCarsDiv = document.getElementById("cartCars");
-  const totalSpan = document.getElementById("cartTotalCars");
 
-  if (!cartCarsDiv || !carCartData) return; // Not on cart page or no car data
-
-  const carCart = JSON.parse(carCartData);
-  if (!Array.isArray(carCart) || carCart.length === 0) {
-    cartCarsDiv.innerHTML += "<p>No car bookings found.</p>";
-    totalSpan.textContent = "$0.00";
-    return;
-  }
-
-  let total = 0;
-  let html = "<h3>Car Bookings</h3>";
-
-  carCart.forEach(c => {
-    total += Number(c.price);
-
-    html += `
-      <div class="carCartItem" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
-        <p><strong>Car ID: ${c.id}</strong></p>
-        <p>City: ${c.city}</p>
-        <p>Type: ${c.type}</p>
-        <p>Check-in: ${c.checkIn}</p>
-        <p>Check-out: ${c.checkOut}</p>
-        <p>Price per day: $${Number(c.price).toFixed(2)}</p>
-      </div>
-    `;
-  });
-
-  cartCarsDiv.innerHTML += html;
-  totalSpan.textContent = `$${total.toFixed(2)}`;
-
-  const bookCarsBtn = document.getElementById("bookCarsBtn");
-  const msgBox = document.getElementById("bookCarsMsg");
-
-  if (bookCarsBtn) {
-    bookCarsBtn.style.display = "block";
-    bookCarsBtn.addEventListener("click", function() {
-      if (!carCartData || carCart.length === 0) {
-        msgBox.textContent = "No cars to book!";
-        msgBox.style.display = "block";
-        return;
-      }
-
-      // Generate JSON file of booked cars (optional)
-      const jsonStr = JSON.stringify(carCart, null, 2);
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "car_bookings.json";
-      a.click();
-      URL.revokeObjectURL(a.href);
-
-      msgBox.textContent = "Car booking JSON file generated successfully!";
-      msgBox.style.display = "block";
-
-      cartCarsDiv.innerHTML = "";
-      totalSpan.textContent = "$0.00";
-      bookCarsBtn.style.display = "none";
-      localStorage.removeItem("carCart");
-    });
-  }
-});
