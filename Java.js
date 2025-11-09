@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCart() {
       const cart = getCart();
       if (!cart.length) {
-        cartFlights.innerHTML = '<p>No flights in cart.</p>';
+        cartFlights.innerHTML = '<p>No flights bookings found.</p>';
         cartTotalEl.textContent = '$0.00';
         if (formWrap) formWrap.style.display = 'none';
         return;
