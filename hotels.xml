@@ -5,7 +5,7 @@
     <hotelId>TX001</hotelId>
     <hotelName>Grand Dallas Hotel</hotelName>
     <city>Dallas</city>
-    <availableRooms>3</availableRooms>
+    <availableRooms>10</availableRooms>
     <date>2024-09-10</date>
     <pricePerNight>140</pricePerNight>
   </hotel>
@@ -14,7 +14,7 @@
     <hotelId>TX002</hotelId>
     <hotelName>Houston Comfort Inn</hotelName>
     <city>Houston</city>
-    <availableRooms>8</availableRooms>
+    <availableRooms>10</availableRooms>
     <date>2024-09-20</date>
     <pricePerNight>130</pricePerNight>
   </hotel>
@@ -23,7 +23,7 @@
     <hotelId>TX003</hotelId>
     <hotelName>Austin Downtown Suites</hotelName>
     <city>Austin</city>
-    <availableRooms>8</availableRooms>
+    <availableRooms>10</availableRooms>
     <date>2024-10-01</date>
     <pricePerNight>155</pricePerNight>
   </hotel>
