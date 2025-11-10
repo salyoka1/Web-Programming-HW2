@@ -966,118 +966,100 @@ function addCarToCart(carBooking) {
 
 document.addEventListener("DOMContentLoaded", function(){
   const cityEl = document.getElementById("carCity");
-  const typeEl = document.getElementById("carType");
-  const inEl = document.getElementById("carCheckIn");
-  const outEl = document.getElementById("carCheckOut");
-  const btn = document.getElementById("carSubmit");
-  const errBox = document.getElementById("carError");
-  const result = document.getElementById("carResult");
+const typeEl = document.getElementById("carType");
+const inEl = document.getElementById("carCheckIn");
+const outEl = document.getElementById("carCheckOut");
+const btn = document.getElementById("carSubmit");
+const errBox = document.getElementById("carError");
+const summary = document.getElementById("carSummary");
+const resultDiv = document.getElementById("carResult"); // <--- make sure this line is here
 
-  if (btn) {
-    btn.addEventListener("click", function () {
-      errBox.textContent = "";
-      result.style.display = "none";
-      result.innerHTML = "";
+if (btn) {
+  btn.addEventListener("click", function () {
+    errBox.textContent = "";
+    summary.style.display = "none";
+    summary.innerHTML = "";
+    resultDiv.innerHTML = "";
+    resultDiv.style.display = "none";
 
-      const city  = cityEl.value.trim();
-      const type  = typeEl.value;
-      const inVal = inEl.value;
-      const outVal = outEl.value;
+    const city  = cityEl.value.trim();
+    const type  = typeEl.value;
+    const inVal = inEl.value;
+    const outVal = outEl.value;
 
-      if (!city)  { errBox.textContent = "Please enter a city."; return; }
-      if (!type)  { errBox.textContent = "Please select a car type."; return; }
-      if (!inVal) { errBox.textContent = "Please choose a pick-up date."; return; }
-      if (!outVal){ errBox.textContent = "Please choose a drop-off date."; return; }
-
-      if (!isCityTXorCA_CAR(city)) { errBox.textContent = "City must be a city in Texas or California."; return; }
-
-      const chosenType = lc(type);
-      if (!VALID_CAR_TYPES.includes(chosenType)) { errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize."; return; }
-
-      const inDate = new Date(inVal);
-      const outDate = new Date(outVal);
-      if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
-        errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
-        return;
-      }
-      if (!(outDate > inDate)) {
-        errBox.textContent = "Drop-off date must be after pick-up date.";
-        return;
-      }
+    if (!city)  { errBox.textContent = "Please enter a city."; return; }
+    if (!type)  { errBox.textContent = "Please select a car type."; return; }
+    if (!inVal) { errBox.textContent = "Please choose a pick-up date."; return; }
+    if (!outVal){ errBox.textContent = "Please choose a drop-off date."; return; }
+    if (!isCityTXorCA_CAR(city)) { errBox.textContent = "City must be a city in Texas or California."; return; }
+    const chosenType = lc(type);
+    if (!VALID_CAR_TYPES.includes(chosenType)) { errBox.textContent = "Car type must be Economy, SUV, Compact, or Midsize."; return; }
+    const inDate = new Date(inVal);
+    const outDate = new Date(outVal);
+    if (!inDateWindow_CAR(inDate) || !inDateWindow_CAR(outDate)) {
+      errBox.textContent = "Dates must be between 2024-09-01 and 2024-12-01.";
+      return;
+    }
+    if (!(outDate > inDate)) {
+      errBox.textContent = "Drop-off date must be after pick-up date.";
+      return;
+    }
 
 
-      result.innerHTML = [
-        `<strong>City:</strong> ${city}`,
-        `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
-        `<strong>Pick-up:</strong> ${inVal}`,
-        `<strong>Drop-off:</strong> ${outVal}`
-      ].join("<br>");
-      result.style.display = "block";
-    });
-  }
+    summary.innerHTML = [
+      `<strong>City:</strong> ${city}`,
+      `<strong>Car Type:</strong> ${typeEl.options[typeEl.selectedIndex].text}`,
+      `<strong>Pick-up:</strong> ${inVal}`,
+      `<strong>Drop-off:</strong> ${outVal}`
+    ].join("<br>");
+    summary.style.display = "block";
 
-  if (btn) {
-    btn.addEventListener('click', function() {
-      const cityInput = cityEl.value.trim().toLowerCase();
-      const checkIn = inEl.value;
-      const checkOut = outEl.value;
-      const carType = typeEl.value.trim().toLowerCase();
-      const resultDiv = result;
 
-      resultDiv.innerHTML = '';
-      if (!cityInput || !checkIn || !checkOut || !carType || carType === 'Select') {
-        resultDiv.innerHTML = '<span style="color:red;">Please fill all fields and select a car type.</span>';
-        return;
-      }
-
-      fetch('cars.xml')
-        .then(res => res.text())
-        .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
-        .then(data => {
-          const cars = data.getElementsByTagName("Car");
-          let matches = [];
-          for (let car of cars) {
-            const city = car.getElementsByTagName("City")[0].textContent.trim().toLowerCase();
-            const type = car.getElementsByTagName("Type")[0].textContent.trim().toLowerCase();
-            const carCheckIn = car.getElementsByTagName("CheckInDate")[0].textContent.trim();
-            const carCheckOut = car.getElementsByTagName("CheckOutDate")[0].textContent.trim();
-
-            if (
-              city === cityInput &&
-              type === carType &&
-              checkIn >= carCheckIn &&
-              checkOut <= carCheckOut
-            ) {
-         matches.push({
-                  id: car.getElementsByTagName("CarID")[0].textContent,
-                  city: car.getElementsByTagName("City")[0].textContent,
-                  type: car.getElementsByTagName("Type")[0].textContent,
-                  carCheckIn: car.getElementsByTagName("CheckInDate")[0].textContent,
-                  carCheckOut: car.getElementsByTagName("CheckOutDate")[0].textContent,
-                  price: car.getElementsByTagName("PricePerDay")[0].textContent,
-                  availableCars: parseInt(car.getElementsByTagName("availableCars")[0].textContent, 10)
-              }); 
-            }
+    fetch('cars.xml')
+      .then(res => res.text())
+      .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+      .then(data => {
+        const cars = data.getElementsByTagName("Car");
+        let matches = [];
+        for (let car of cars) {
+          const xmlCity = car.getElementsByTagName("City")[0].textContent.trim().toLowerCase();
+          const xmlType = car.getElementsByTagName("Type")[0].textContent.trim().toLowerCase();
+          const carCheckIn = car.getElementsByTagName("CheckInDate")[0].textContent.trim();
+          const carCheckOut = car.getElementsByTagName("CheckOutDate")[0].textContent.trim();
+          if (
+            xmlCity === city.toLowerCase() &&
+            xmlType === chosenType &&
+            inVal >= carCheckIn &&
+            outVal <= carCheckOut
+          ) {
+            matches.push({
+              id: car.getElementsByTagName("CarID")[0].textContent,
+              city: car.getElementsByTagName("City")[0].textContent,
+              type: car.getElementsByTagName("Type")[0].textContent,
+              carCheckIn: car.getElementsByTagName("CheckInDate")[0].textContent,
+              carCheckOut: car.getElementsByTagName("CheckOutDate")[0].textContent,
+              price: car.getElementsByTagName("PricePerDay")[0].textContent,
+              availableCars: parseInt(car.getElementsByTagName("availableCars")[0].textContent, 10)
+            });
           }
-
-          if (matches.length === 0) {
-            resultDiv.innerHTML = '<span style="color:orange;">No cars found matching your criteria.</span>';
-          } else {
-            let html = '<table border="1" cellpadding="4"><tr><th>Car ID</th><th>City</th><th>Type</th><th>Available From</th><th>Available To</th><th>Price/Day</th><th>Book</th></tr>';
-            for (let match of matches) {
-              html += `<tr>
-                <td>${match.id}</td>
-                <td>${match.city}</td>
-                <td>${match.type}</td>
-                <td>${match.carCheckIn}</td>
-                <td>${match.carCheckOut}</td>
-                <td>${match.price}</td>
-                <td><button class="bookCarBtn" data-car='${JSON.stringify(match)}'>Book</button></td>
-              </tr>`;
-            }
-            html += '</table>';
-
-            resultDiv.innerHTML = html;
+        }
+        if (matches.length === 0) {
+          resultDiv.innerHTML = '<span style="color:orange;">No cars found matching your criteria.</span>';
+        } else {
+          let html = '<table border="1" cellpadding="4"><tr><th>Car ID</th><th>City</th><th>Type</th><th>Available From</th><th>Available To</th><th>Price/Day</th><th>Book</th></tr>';
+          for (let match of matches) {
+            html += `<tr>
+              <td>${match.id}</td>
+              <td>${match.city}</td>
+              <td>${match.type}</td>
+              <td>${match.carCheckIn}</td>
+              <td>${match.carCheckOut}</td>
+              <td>${match.price}</td>
+              <td><button class="bookCarBtn" data-car='${JSON.stringify(match)}'>Book</button></td>
+            </tr>`;
+          }
+          html += '</table>';
+          resultDiv.innerHTML = html;
 
             // Setup book button handlers
             const bookBtns = document.querySelectorAll('.bookCarBtn');
@@ -1103,6 +1085,7 @@ document.addEventListener("DOMContentLoaded", function(){
               });
             });
           }
+          resultDiv.style.display = "block";
         })
         .catch(e => {
           resultDiv.innerHTML = '<span style="color:red;">Error loading car data.</span>';
@@ -1167,8 +1150,8 @@ function loadCarCart() {
         <p><strong>Car ID: ${c.id}</strong></p>
         <p>City: ${c.city}</p>
         <p>Type: ${c.type}</p>
-        <p>Check-in: ${c.checkIn}</p>
-        <p>Check-out: ${c.checkOut}</p>
+        <p>Pick-up: ${c.checkIn}</p>
+        <p>Drop-off: ${c.checkOut}</p>
         <p>Price per day: $${Number(c.price).toFixed(2)}</p>
         <p><strong>Total Price: $${totalPrice.toFixed(2)}</strong></p>
       </div>
