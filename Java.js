@@ -920,7 +920,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /* ==================== CARS PAGE LOGIC (DOM methods) ==================== */
-// Add car booking to localStorage cart
+
 const TX_CITIES_CAR = [
   "austin","dallas","houston","san antonio","el paso","fort worth","arlington","plano","irving",
   "corpus christi","lubbock","garland","mckinney","frisco","amarillo","grand prairie","brownsville"
@@ -961,7 +961,6 @@ function addCarToCart(carBooking) {
     alert("This car is already booked for the selected dates.");
   }
 
-  // For extra debugging, show raw localStorage value after setting:
   console.log("LocalStorage value:", localStorage.getItem("carCart"));
 }
 
@@ -1017,7 +1016,6 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   }
 
-  // Search cars.xml and display matching cars, add book buttons
   if (btn) {
     btn.addEventListener('click', function() {
       const cityInput = cityEl.value.trim().toLowerCase();
@@ -1050,14 +1048,15 @@ document.addEventListener("DOMContentLoaded", function(){
               checkIn >= carCheckIn &&
               checkOut <= carCheckOut
             ) {
-              matches.push({
-                id: car.getElementsByTagName("CarID")[0].textContent,
-                city: car.getElementsByTagName("City")[0].textContent,
-                type: car.getElementsByTagName("Type")[0].textContent,
-                carCheckIn,
-                carCheckOut,
-                price: car.getElementsByTagName("PricePerDay")[0].textContent
-              });
+         matches.push({
+                  id: car.getElementsByTagName("CarID")[0].textContent,
+                  city: car.getElementsByTagName("City")[0].textContent,
+                  type: car.getElementsByTagName("Type")[0].textContent,
+                  carCheckIn: car.getElementsByTagName("CheckInDate")[0].textContent,
+                  carCheckOut: car.getElementsByTagName("CheckOutDate")[0].textContent,
+                  price: car.getElementsByTagName("PricePerDay")[0].textContent,
+                  availableCars: parseInt(car.getElementsByTagName("availableCars")[0].textContent, 10)
+              }); 
             }
           }
 
@@ -1091,12 +1090,15 @@ document.addEventListener("DOMContentLoaded", function(){
                 alert(`Car added to cart! \nID: ${car.id}\nCity: ${car.city}\nType: ${car.type}\nFrom: ${userCheckIn}\nTo: ${userCheckOut}\nPrice/Day: ${car.price}`);
 
                 addCarToCart({
+                  userId: Date.now(),
+                  bookingNumber: "C" + Math.floor(Math.random() * 100000),
                   id: car.id,
                   city: car.city,
                   type: car.type,
                   checkIn: userCheckIn,
                   checkOut: userCheckOut,
-                  price: car.price
+                  price: car.price,
+                  availableCars: parseInt(car.availableCars)
                 });
               });
             });
@@ -1108,9 +1110,8 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   }
 
-  
-  setupBookCarsButton();
   loadCarCart();
+  setupBookCarsButton();
 });
 
 function loadCarCart() {
@@ -1161,6 +1162,8 @@ function loadCarCart() {
 
     html += `
       <div class="carCartItem" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+        <p><strong>User ID: ${c.userId}</strong></p>
+        <p>Booking #: ${c.bookingNumber}</p>
         <p><strong>Car ID: ${c.id}</strong></p>
         <p>City: ${c.city}</p>
         <p>Type: ${c.type}</p>
@@ -1208,30 +1211,66 @@ function setupBookCarsButton() {
 
     const carCart = JSON.parse(carCartData);
 
-    // Download JSON
-    const jsonStr = JSON.stringify(carCart, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
+    // Download in XML format
+    const xmlStr = cartToXML(carCart);
+    const blob = new Blob([xmlStr], { type: "application/xml" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "car_bookings.json";
+    a.download = "car_bookings.xml";
     a.click();
     URL.revokeObjectURL(a.href);
 
-    // Feedback + clear cart
+  
     if (msgBox) {
-      msgBox.textContent = "Car booking JSON file generated successfully!";
+      msgBox.textContent = "Car booking XML file generated successfully!";
       msgBox.style.display = "block";
     }
+    (async () => {
+      for (const c of carCart) {
+        const newAvailable = Math.max(0, parseInt(c.availableCars, 10) - 1);
+        console.log("Booking car update:", { carId: c.id, newAvailableCars: newAvailable });
+        try {
+          const resp = await fetch('/updatecar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ carId: c.id, newAvailableCars: newAvailable })
+          });
+          const text = await resp.text();
+          console.log(`Updated ${c.id}: ${text}`);
+        } catch (err) {
+          console.error('Failed to update available cars for', c.id, err);
+        }
+      }
+    })();
     localStorage.removeItem("carCart");
+   
 
     // Hide button now that cart is empty
     bookCarsBtn.style.display = "none";
 
-    // Optional: refresh any cart UI if you have a renderer
+    
     if (typeof loadCarCart === "function") {
       loadCarCart();
     }
   };
+}
+
+function cartToXML(carCart) {
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<CarBookings>\n';
+  carCart.forEach(c => {
+    xml += `  <Booking>\n`;
+    if (c.userId) xml += `    <UserID>${c.userId}</UserID>\n`;
+    if (c.bookingNumber) xml += `    <BookingNumber>${c.bookingNumber}</BookingNumber>\n`;
+    xml += `    <CarID>${c.id}</CarID>\n`;
+    xml += `    <City>${c.city}</City>\n`;
+    xml += `    <Type>${c.type}</Type>\n`;
+    xml += `    <CheckIn>${c.checkIn}</CheckIn>\n`;
+    xml += `    <CheckOut>${c.checkOut}</CheckOut>\n`;
+    xml += `    <PricePerDay>${c.price}</PricePerDay>\n`;
+    xml += `  </Booking>\n`;
+  });
+  xml += '</CarBookings>\n';
+  return xml;
 }
 
 
@@ -1255,5 +1294,5 @@ function initPassengersPanel() {
 }
 document.addEventListener('DOMContentLoaded', initPassengersPanel);
 
-// ====== CARS CART DISPLAY=========
+
 
