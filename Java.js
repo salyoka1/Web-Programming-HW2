@@ -771,28 +771,40 @@ document.addEventListener("DOMContentLoaded", function(){
         document.querySelectorAll(".addHotelBtn").forEach(btn => {
           btn.addEventListener("click", e => {
             const d = e.target.dataset;
+
+            // compute number of nights between check-in and check-out
+            const inDate = new Date(inEl.value);
+            const outDate = new Date(outEl.value);
+            const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
+
+            // pricePerNight field here represents the price for one room for the whole stay (per-night * nights)
+            const pricePerRoomForStay = parseFloat(d.price) * (Number.isFinite(nights) && nights > 0 ? nights : 1);
+
+            const pricePerNight = parseFloat(d.price);
+            const roomsCount = parseInt(d.rooms, 10);
+            const nightsCount = Number.isFinite(nights) && nights > 0 ? nights : 1;
             const booking = {
-            userId: Date.now(),
-            bookingNumber: "H" + Math.floor(Math.random() * 100000),
-            hotelId: d.id,
-            hotelName: d.name,
-            city: d.city,
-            checkIn: inEl.value,
-            checkOut: outEl.value,
-            adults: ad,
-            children: ch,
-            infants: inf,
-            rooms: parseInt(d.rooms),
-            pricePerNight: parseFloat(d.price),
-            totalPrice: parseFloat(d.price) * parseInt(d.rooms),
-            availableRooms: parseInt(d.avail, 10)
-          };
-  
+              userId: Date.now(),
+              bookingNumber: "H" + Math.floor(Math.random() * 100000),
+              hotelId: d.id,
+              hotelName: d.name,
+              city: d.city,
+              checkIn: inEl.value,
+              checkOut: outEl.value,
+              adults: ad,
+              children: ch,
+              infants: inf,
+              rooms: roomsCount,
+              pricePerNight: pricePerNight, // price for one room for one night
+              totalPrice: pricePerNight * nightsCount * roomsCount,
+              availableRooms: parseInt(d.avail, 10)
+            };
+
             // Preserve existing hotel cart items instead of overwriting
             const existing = JSON.parse(localStorage.getItem("hotelCart") || "[]");
             existing.push(booking);
             localStorage.setItem("hotelCart", JSON.stringify(existing));
-  
+
             alert(`${d.rooms} rooms in ${d.name} added to cart!`);
             resultBox.style.display = "none";
 
