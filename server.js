@@ -142,48 +142,57 @@ app.post('/update_hotel', async (req, res) => {
   }
 });
 
-const CARSPATH = path.join(__dirname, 'cars.xml');
+const CARSPATH = path.join(__dirname, "cars.xml");
 
-async function readCars() {
-  const raw = await fs.readFile(CARSPATH, 'utf8');
-  return raw; // Return the XML string or parse if needed
-}
+// async function readCarsXml() {
+//   return await fs.readFile(CARSPATH, "utf8");
+// }
+// async function writeCarsXml(xmlStr) {
+//   await fs.writeFile(CARSPATH, xmlStr, "utf8");
+// }
 
-async function writeCars(xmlStr) {
-  const backupPath = `${CARSPATH}.bak.${Date.now()}`;
-  await fs.writeFile(backupPath, xmlStr, 'utf8');
-  const tmpPath = `${CARSPATH}.tmp`;
-  await fs.writeFile(tmpPath, xmlStr, 'utf8');
-  await fs.rename(tmpPath, CARSPATH);
-}
-
-app.post('/updatecar', async (req, res) => {
-  const { carId, newCheckIn, newCheckOut } = req.body;
-  if (!carId || !newCheckIn || !newCheckOut) {
+app.post("/updatecar", async (req, res) => {
+  const { carId, newAvailableCars } = req.body;
+  if (!carId || !Number.isInteger(newAvailableCars)) {
     return res.status(400).json({ error: "Missing required parameters" });
   }
 
   try {
-    let xmlStr = await fs.readFile(CARSPATH, 'utf8');
+    let xmlData = await fs.readFile(CARSPATH, "utf8");
 
-    // Parse XML and update car's availability dates to remove booked dates
-    // (You may adjust the date ranges accordingly to implement partial availability)
-    
-    // Simple string manipulation example (better to parse XML properly using a library):
-    // Find the car block by <CarID>carId</CarID> and update checkIn/checkOut date nodes
+    // Get start/end of <Cars> to preserve comments/header if any
+    const carsStart = xmlData.indexOf("<Cars>");
+    const carsEnd = xmlData.lastIndexOf("</Cars>");
+    const before = xmlData.slice(0, carsStart + "<Cars>".length);
+    const after = xmlData.slice(carsEnd);
 
-    const carBlockStart = xmlStr.indexOf(`<CarID>${carId}</CarID>`);
-    if (carBlockStart === -1) return res.status(404).json({ error: "Car not found" });
+    // All <Car> blocks
+    const carBlockRegex = /<Car>[\s\S]*?<\/Car>/g;
+    const blocks = (xmlData.match(carBlockRegex) || []);
+    let updated = false;
 
-    // Further parsing logic here to update check-in and check-out dates to exclude booked times...
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const idMatch = block.match(/<CarID>\s*((.|\n)*?)\s*<\/CarID>/);
+      const idVal = idMatch ? idMatch[1].trim() : null;
+      if (idVal === String(carId)) {
+        // Only update availableCars for the matching CarID
+        blocks[i] = block.replace(/(<availableCars>)[\s\S]*?(<\/availableCars>)/i, 
+                                 `$1${String(newAvailableCars)}$2`);
+        updated = true;
+        break;
+      }
+    }
 
-    // Save updated XML back
-    await writeCars(xmlStr);
+    if (!updated) return res.status(404).json({error: "Car not found"});
 
-    res.json({ ok: true, carId, newCheckIn, newCheckOut });
+    // Reconstruct content, preserve formatting/other blocks
+    const out = before + "\n" + blocks.join("\n") + "\n" + after;
+    await fs.writeFile(CARSPATH, out, "utf8");
+    res.json({ ok:true, carId, newAvailableCars });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update car availability" });
+    console.error("Error updating car XML:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
